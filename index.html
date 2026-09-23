@@ -1,0 +1,1883 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phòng Thí Nghiệm Khoa Học Ảo - Virtual Science Lab AI 10B1</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #070a13;
+            --bg-card: rgba(22, 30, 49, 0.78);
+            --bg-card-hover: rgba(30, 41, 69, 0.88);
+            --border-color: rgba(255, 255, 255, 0.12);
+            --accent-physics: #38bdf8;
+            --accent-chem: #c084fc;
+            --accent-bio: #4ade80;
+            --accent-astro: #fbbf24;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(192, 132, 252, 0.08) 0%, transparent 40%);
+        }
+
+        /* HEADER & NAVIGATION */
+        header {
+            background: rgba(11, 15, 25, 0.88);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding: 0.9rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-btn {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: linear-gradient(135deg, #38bdf8, #c084fc, #fbbf24);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            padding: 0.55rem 1.1rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.25s ease;
+        }
+
+        .nav-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .nav-btn.active[data-subject="physics"] { background: rgba(56, 189, 248, 0.15); color: var(--accent-physics); border-color: rgba(56, 189, 248, 0.3); }
+        .nav-btn.active[data-subject="chemistry"] { background: rgba(192, 132, 252, 0.15); color: var(--accent-chem); border-color: rgba(192, 132, 252, 0.3); }
+        .nav-btn.active[data-subject="biology"] { background: rgba(74, 222, 128, 0.15); color: var(--accent-bio); border-color: rgba(74, 222, 128, 0.3); }
+        .nav-btn.active[data-subject="astronomy"] { background: rgba(251, 191, 36, 0.15); color: var(--accent-astro); border-color: rgba(251, 191, 36, 0.3); }
+
+        .btn-home {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+
+        /* MAIN LAYOUT VIEWS */
+        main {
+            flex: 1;
+            padding: 2rem;
+            max-width: 1550px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .view-section {
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .view-section.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* LANDING PAGE / HUB */
+        .hero-banner {
+            text-align: center;
+            padding: 2.5rem 1rem 2rem;
+            max-width: 950px;
+            margin: 0 auto;
+        }
+
+        .hero-title {
+            font-size: 2.6rem;
+            font-weight: 800;
+            margin-bottom: 0.8rem;
+            background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subtitle {
+            font-size: 1.05rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .subject-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.8rem;
+            margin-top: 1.8rem;
+        }
+
+        .subject-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 1.8rem;
+            backdrop-filter: blur(12px);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .subject-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 4px;
+        }
+
+        .subject-card[data-subject="physics"]::before { background: var(--accent-physics); }
+        .subject-card[data-subject="chemistry"]::before { background: var(--accent-chem); }
+        .subject-card[data-subject="biology"]::before { background: var(--accent-bio); }
+        .subject-card[data-subject="astronomy"]::before { background: var(--accent-astro); }
+
+        .subject-card:hover {
+            transform: translateY(-6px);
+            background: var(--bg-card-hover);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .card-icon {
+            font-size: 2.2rem;
+            width: 55px; height: 55px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .card-title { font-size: 1.4rem; font-weight: 700; }
+        .card-desc { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1.5rem; }
+
+        .sub-experiments-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .sub-exp-item {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sub-exp-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            padding-left: 1.2rem;
+        }
+
+        .card-enter-btn {
+            width: 100%;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .card-enter-btn.physics { background: var(--accent-physics); color: #0f172a; }
+        .card-enter-btn.chemistry { background: var(--accent-chem); color: #0f172a; }
+        .card-enter-btn.biology { background: var(--accent-bio); color: #0f172a; }
+        .card-enter-btn.astronomy { background: var(--accent-astro); color: #0f172a; }
+
+        .card-enter-btn:hover { opacity: 0.9; }
+
+        /* EXPERIMENT WORKSPACE */
+        .workspace-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+
+        .breadcrumb-link { color: var(--text-muted); cursor: pointer; }
+        .breadcrumb-link:hover { color: var(--text-main); }
+
+        .sub-exp-tabs {
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.3rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            flex-wrap: wrap;
+        }
+
+        .tab-chip {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-chip.active {
+            background: var(--bg-card);
+            color: var(--text-main);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        /* EXPANSIVE CANVAS */
+        .large-canvas-wrapper {
+            position: relative;
+            width: 100%;
+            height: 580px;
+            background: #030712;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+        }
+
+        canvas { width: 100%; height: 100%; display: block; }
+
+        /* CONTROLS BELOW CANVAS */
+        .controls-bottom-panel {
+            margin-top: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 1.8rem;
+            backdrop-filter: blur(12px);
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        .controls-section-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 0.5rem;
+        }
+
+        .sliders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.2rem;
+        }
+
+        .control-item { display: flex; flex-direction: column; gap: 0.4rem; }
+        .control-item label { font-size: 0.85rem; color: var(--text-muted); display: flex; justify-content: space-between; }
+        .control-item label span { color: var(--text-main); font-weight: 700; font-family: monospace; }
+
+        input[type="range"] {
+            width: 100%; accent-color: #38bdf8; height: 6px; background: #334155; border-radius: 3px; outline: none; cursor: pointer;
+        }
+
+        select {
+            width: 100%; padding: 0.65rem 0.8rem; background: #0f172a; border: 1px solid var(--border-color); color: var(--text-main); border-radius: 10px; outline: none; font-size: 0.88rem;
+        }
+
+        .telemetry-card {
+            background: rgba(15, 23, 42, 0.8); border-radius: 14px; padding: 1.2rem; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 0.6rem; height: 100%;
+        }
+
+        .tele-row { display: flex; justify-content: space-between; font-size: 0.88rem; }
+        .tele-label { color: var(--text-muted); }
+        .tele-val { font-weight: 700; font-family: monospace; color: var(--text-main); }
+
+        .btn-action-group { display: flex; gap: 0.6rem; margin-top: 1.2rem; flex-wrap: wrap; }
+        .btn-act { flex: 1; min-width: 140px; padding: 0.75rem; border: none; border-radius: 10px; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; background: #334155; color: var(--text-main); display: flex; align-items: center; justify-content: center; gap: 0.4rem; }
+        .btn-act:hover { background: #475569; }
+        .btn-act.primary { background: #0284c7; color: white; }
+        .btn-act.primary:hover { background: #0369a1; }
+        .btn-act.success { background: #16a34a; color: white; }
+        .btn-act.success:hover { background: #15803d; }
+        .btn-act.warning { background: #d97706; color: white; }
+        .btn-act.warning:hover { background: #b45309; }
+
+        /* ASTRONOMY POPUP WITH FAMILIAR UNITS */
+        .planet-popup {
+            position: absolute; bottom: 25px; right: 25px; width: 350px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(251, 191, 36, 0.5); border-radius: 16px; padding: 1.4rem; display: none; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8); z-index: 50;
+            animation: popupFade 0.3s ease-out;
+        }
+        @keyframes popupFade { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .planet-popup.active { display: block; }
+        
+        .popup-header-row {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;
+        }
+        .popup-title { font-size: 1.35rem; font-weight: 800; color: var(--accent-astro); }
+        .popup-close-btn {
+            background: rgba(255, 255, 255, 0.1); border: none; color: var(--text-main); width: 28px; height: 28px; border-radius: 50%; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+        }
+        .popup-close-btn:hover { background: rgba(239, 68, 68, 0.8); color: white; }
+        .wiki-btn { display: inline-block; margin-top: 1rem; padding: 0.65rem; background: var(--accent-astro); color: #0f172a; text-decoration: none; font-weight: 700; border-radius: 10px; font-size: 0.88rem; text-align: center; width: 100%; transition: opacity 0.2s; }
+        .wiki-btn:hover { opacity: 0.9; }
+
+        @media (max-width: 900px) {
+            .controls-bottom-panel { grid-template-columns: 1fr; }
+            .large-canvas-wrapper { height: 420px; }
+            .hero-title { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER NAVIGATION -->
+    <header>
+        <button class="logo-btn" id="btn-logo-home">🧪 Virtual Lab AI 10B1</button>
+        <div class="nav-links">
+            <button class="nav-btn btn-home" id="nav-home">🏠 Trang chủ</button>
+            <button class="nav-btn" data-subject="physics">⚡ Vật Lý</button>
+            <button class="nav-btn" data-subject="chemistry">🧪 Hóa Học</button>
+            <button class="nav-btn" data-subject="biology">🌿 Sinh Học</button>
+            <button class="nav-btn" data-subject="astronomy">🪐 Thiên Văn</button>
+        </div>
+    </header>
+
+    <main>
+        <!-- VIEW 1: LANDING PAGE / HUB -->
+        <section class="view-section active" id="view-hub">
+            <div class="hero-banner">
+                <h1 class="hero-title">Phòng Thí Nghiệm Khoa Học Ảo AI 10B1</h1>
+                <p class="hero-subtitle">Mô phỏng trực quan chuẩn hóa: Tất cả các bài thí nghiệm Vật Lý, Hóa Học, Sinh Học & Thiên Văn Học.</p>
+            </div>
+
+            <div class="subject-grid">
+                <!-- VẬT LÝ -->
+                <div class="subject-card" data-subject="physics">
+                    <div>
+                        <div class="card-header"><div class="card-icon" style="color: var(--accent-physics);">⚡</div><div class="card-title">Vật Lý</div></div>
+                        <p class="card-desc">Con lắc lò xo, con lắc đơn (α_max), ném xiên, khúc xạ Snell & Mô Hình Lắp Mạch Điện Tương Tác Chuẩn ISO.</p>
+                        <div class="sub-experiments-list">
+                            <div class="sub-exp-item" onclick="openExperiment('physics', 'spring')">1. Con lắc lò xo (Đứng thẳng tắt dần) <span>➔</span></div>
+                            <div class="sub-exp-item" onclick="openExperiment('physics', 'pendulum')">2. Con lắc đơn (Góc α_max) <span>➔</span></div>
+                            <div class="sub-exp-item" onclick="openExperiment('physics', 'projectile')">3. Ném xiên (Chạm đất dừng) <span>➔</span></div>
+                            <div class="sub-exp-item" onclick="openExperiment('physics', 'refraction')">4. Khúc xạ & Phản xạ toàn phần <span>➔</span></div>
+                            <div class="sub-exp-item" onclick="openExperiment('physics', 'circuits')">5. Mô hình Lắp Mạch Điện <span>➔</span></div>
+                        </div>
+                    </div>
+                    <button class="card-enter-btn physics" onclick="openExperiment('physics', 'spring')">Vào Thí Nghiệm Vật Lý ➔</button>
+                </div>
+
+                <!-- HÓA HỌC -->
+                <div class="subject-card" data-subject="chemistry">
+                    <div>
+                        <div class="card-header"><div class="card-icon" style="color: var(--accent-chem);">🧪</div><div class="card-title">Hóa Học</div></div>
+                        <p class="card-desc">Chuẩn độ pH, Kim loại + HCl, Thử màu ngọn lửa & Phản ứng Tạo Kết Tủa Rót Động.</p>
+                        <div class="sub-experiments-list">
+                            <div class="sub-exp-item" onclick="openExperiment('chemistry', 'ph')">1. Chuẩn độ Axit - Bazơ & pH <span>➔</span></div>
+                            <div class="sub-exp-item" onclick="openExperiment('chemistry', 'metal')">2. Kim loại + Axit (Khí H₂) <span>➔</span></div>
+                            <div class="sub-exp-item" onclick="openExperiment('chemistry', 'flame')">3. Thử màu ngọn lửa Kim loại <span>➔</span></div>
+                            <div class="sub-exp-item" onclick="openExperiment('chemistry', 'precipitate')">4. Phản ứng Tạo Kết tủa (Rót động) <span>➔</span></div>
+                        </div>
+                    </div>
+                    <button class="card-enter-btn chemistry" onclick="openExperiment('chemistry', 'ph')">Vào Thí Nghiệm Hóa Học ➔</button>
+                </div>
+
+                <!-- SINH HỌC -->
+                <div class="subject-card" data-subject="biology">
+                    <div>
+                        <div class="card-header"><div class="card-icon" style="color: var(--accent-bio);">🌿</div><div class="card-title">Sinh Học</div></div>
+                        <p class="card-desc">Quang hợp & O₂, Enzim Catalase phân giải H₂O₂ và Di Truyền Mendel Chuẩn Xác.</p>
+                        <div class="sub-experiments-list">
+                            <div class="sub-exp-item" onclick="openExperiment('biology', 'photo')">1. Quang hợp & Thoát khí O₂ <span>➔</span></div>
+                            <div class="sub-exp-item" onclick="openExperiment('biology', 'catalase')">2. Enzim Catalase & H₂O₂ <span>➔</span></div>
+                            <div class="sub-exp-item" onclick="openExperiment('biology', 'mendel')">3. Di truyền Mendel <span>➔</span></div>
+                        </div>
+                    </div>
+                    <button class="card-enter-btn biology" onclick="openExperiment('biology', 'photo')">Vào Thí Nghiệm Sinh Học ➔</button>
+                </div>
+
+                <!-- THIÊN VĂN -->
+                <div class="subject-card" data-subject="astronomy">
+                    <div>
+                        <div class="card-header"><div class="card-icon" style="color: var(--accent-astro);">🪐</div><div class="card-title">Thiên Văn Học</div></div>
+                        <p class="card-desc">Mô phỏng Hệ Mặt Trời với đơn vị quen thuộc (Đường kính km, Triệu km, Ngày/Năm Trái Đất, km/s).</p>
+                        <div class="sub-experiments-list">
+                            <div class="sub-exp-item" onclick="openExperiment('astronomy', 'solarsystem')">1. Hệ Mặt Trời (Đơn vị km, Ngày/Năm) <span>➔</span></div>
+                        </div>
+                    </div>
+                    <button class="card-enter-btn astronomy" onclick="openExperiment('astronomy', 'solarsystem')">Khám Phá Vũ Trụ ➔</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 2: EXPERIMENT WORKSPACE -->
+        <section class="view-section" id="view-workspace">
+            <div class="workspace-header">
+                <div class="breadcrumb">
+                    <span class="breadcrumb-link" id="bc-home">Trang chủ</span>
+                    <span>/</span>
+                    <span id="bc-subject" style="font-weight: 700; color: var(--text-main);">Vật Lý</span>
+                </div>
+                <div class="sub-exp-tabs" id="subExpTabs"></div>
+            </div>
+
+            <!-- LARGE CANVAS DISPLAY -->
+            <div class="large-canvas-wrapper">
+                <canvas id="mainCanvas"></canvas>
+
+                <!-- Astronomy Popup Info with Familiar Units & Close Button -->
+                <div class="planet-popup" id="planetPopup">
+                    <div class="popup-header-row">
+                        <div class="popup-title" id="pop-name">Trái Đất</div>
+                        <button class="popup-close-btn" id="btn-close-popup" title="Đóng bảng">✕</button>
+                    </div>
+                    <div class="telemetry-card" style="margin-bottom: 0;">
+                        <div class="tele-row"><span class="tele-label">Đường kính thực tế:</span><span class="tele-val" id="pop-diam">12,742 km</span></div>
+                        <div class="tele-row"><span class="tele-label">Khoảng cách đến MT:</span><span class="tele-val" id="pop-dist-km">149.6 triệu km</span></div>
+                        <div class="tele-row"><span class="tele-label">Chu kỳ quỹ đạo:</span><span class="tele-val" id="pop-orbit-fam">365.25 ngày (1 năm)</span></div>
+                        <div class="tele-row"><span class="tele-label">Vận tốc di chuyển:</span><span class="tele-val" id="pop-speed-kms">29.78 km/s</span></div>
+                        <div class="tele-row"><span class="tele-label">Khối lượng xấp xỉ:</span><span class="tele-val" id="pop-mass-kg">5.97 × 10²⁴ kg</span></div>
+                    </div>
+                    <a href="#" target="_blank" class="wiki-btn" id="pop-wiki-link">Đọc chi tiết trên Wikipedia ↗</a>
+                </div>
+            </div>
+
+            <!-- CONTROLS DIRECTLY BELOW CANVAS -->
+            <div class="controls-bottom-panel">
+                <div>
+                    <div class="controls-section-title">🎛️ Bảng Điều Chỉnh Thông Số Thí Nghiệm</div>
+                    <div class="sliders-grid" id="slidersContainer"></div>
+                    <div class="btn-action-group" id="actionBtnGroup">
+                        <button class="btn-act success" id="btn-start-sim">▶ Bắt Đầu Thí Nghiệm</button>
+                        <button class="btn-act" id="btn-reset-sim">🔄 Đặt Lại Ban Đầu</button>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="controls-section-title">📊 Số Liệu Thời Gian Thực</div>
+                    <div class="telemetry-card" id="telemetryContainer"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Canvas roundRect Polyfill (Fixed JS Syntax)
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+                if (typeof r === 'number') r = [r, r, r, r];
+                else if (!r) r = [0, 0, 0, 0];
+                const r0 = r[0] || 0, r1 = r[1] || 0, r2 = r[2] || 0, r3 = r[3] || 0;
+                this.moveTo(x + r0, y);
+                this.lineTo(x + w - r1, y);
+                this.quadraticCurveTo(x + w, y, x + w, y + r1);
+                this.lineTo(x + w, y + h - r2);
+                this.quadraticCurveTo(x + w, y + h, x + w - r2, y + h);
+                this.lineTo(x + r3, y + h);
+                this.quadraticCurveTo(x, y + h, x, y + h - r3);
+                this.lineTo(x, y + r0);
+                this.quadraticCurveTo(x, y, x + r0, y);
+                return this;
+            };
+        }
+
+        let currentSubject = 'physics', currentSubExp = 'spring';
+        let physRunning = false, simTime = 0, animFrameId = null;
+        let physStopped = false;
+
+        const mainCanvas = document.getElementById('mainCanvas'), ctx = mainCanvas.getContext('2d');
+
+        function resizeCanvas() {
+            const wrapper = mainCanvas.parentElement;
+            if (wrapper && wrapper.clientWidth > 0 && wrapper.clientHeight > 0) {
+                mainCanvas.width = wrapper.clientWidth;
+                mainCanvas.height = wrapper.clientHeight;
+            }
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        document.getElementById('nav-home').addEventListener('click', showHub);
+        document.getElementById('btn-logo-home').addEventListener('click', showHub);
+        document.getElementById('bc-home').addEventListener('click', showHub);
+        document.getElementById('btn-close-popup').addEventListener('click', () => {
+            document.getElementById('planetPopup').classList.remove('active');
+        });
+
+        document.querySelectorAll('.nav-btn[data-subject]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const subj = btn.getAttribute('data-subject');
+                const defaultExps = { physics: 'spring', chemistry: 'ph', biology: 'photo', astronomy: 'solarsystem' };
+                openExperiment(subj, defaultExps[subj]);
+            });
+        });
+
+        function showHub() {
+            document.getElementById('view-hub').classList.add('active');
+            document.getElementById('view-workspace').classList.remove('active');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('nav-home').classList.add('active');
+            if (animFrameId) cancelAnimationFrame(animFrameId);
+        }
+
+        function openExperiment(subject, subExp) {
+            const firstExps = { physics: 'spring', chemistry: 'ph', biology: 'photo', astronomy: 'solarsystem' };
+            currentSubject = subject;
+            currentSubExp = subExp || firstExps[subject];
+            simTime = 0;
+            physRunning = false; physStopped = false;
+            
+            document.getElementById('view-hub').classList.remove('active');
+            document.getElementById('view-workspace').classList.add('active');
+
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            const activeNav = document.querySelector(`.nav-btn[data-subject="${subject}"]`);
+            if (activeNav) activeNav.classList.add('active');
+
+            const subjectNames = { physics: '⚡ Vật Lý', chemistry: '🧪 Hóa Học', biology: '🌿 Sinh Học', astronomy: '🪐 Thiên Văn Học' };
+            document.getElementById('bc-subject').innerText = subjectNames[subject];
+
+            renderSubExpTabs();
+            setTimeout(resizeCanvas, 10);
+            setupControlsAndTelemetry();
+            document.getElementById('planetPopup').classList.remove('active');
+
+            if (animFrameId) cancelAnimationFrame(animFrameId);
+            loop();
+        }
+
+        const subExpData = {
+            physics: [
+                { id: 'spring', name: '1. Con lắc lò xo (Đứng)' },
+                { id: 'pendulum', name: '2. Con lắc đơn (Góc α_max)' },
+                { id: 'projectile', name: '3. Ném xiên' },
+                { id: 'refraction', name: '4. Khúc xạ Snell' },
+                { id: 'circuits', name: '5. Mô hình Lắp Mạch Điện' }
+            ],
+            chemistry: [
+                { id: 'ph', name: '1. Chuẩn độ Axit - Bazơ' },
+                { id: 'metal', name: '2. Kim loại + Axit HCl' },
+                { id: 'flame', name: '3. Thử màu ngọn lửa' },
+                { id: 'precipitate', name: '4. Phản ứng Tạo Kết Tủa (Rót Động)' }
+            ],
+            biology: [
+                { id: 'photo', name: '1. Quang hợp & O₂' },
+                { id: 'catalase', name: '2. Enzim Catalase' },
+                { id: 'mendel', name: '3. Di truyền Mendel' }
+            ],
+            astronomy: [
+                { id: 'solarsystem', name: '1. Hệ Mặt Trời (Đơn vị km, Ngày/Năm)' }
+            ]
+        };
+
+        function renderSubExpTabs() {
+            const container = document.getElementById('subExpTabs');
+            container.innerHTML = '';
+            subExpData[currentSubject].forEach(item => {
+                const btn = document.createElement('button');
+                btn.className = `tab-chip ${item.id === currentSubExp ? 'active' : ''}`;
+                btn.innerText = item.name;
+                btn.onclick = () => {
+                    currentSubExp = item.id; simTime = 0; physRunning = false; physStopped = false;
+                    renderSubExpTabs(); setupControlsAndTelemetry();
+                    document.getElementById('planetPopup').classList.remove('active');
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        const params = {
+            // Physics
+            p_mass: 0.5, p_k: 50, p_g: 9.8, p_damping: 0.12,
+            p_len: 1.5, p_alpha_max: 30,
+            p_v0: 25, p_deg: 45, p_h0: 0,
+            p_n1: 1.0, p_n2: 1.33, p_incident_i: 45,
+            p_circuit_view: 'schematic',
+            p_circuit_config: 'parallel',
+            p_switch_closed: true,
+            p_voltage: 12.0, p_resistor: 10.0, p_resistor2: 10.0,
+            // Chemistry
+            c_acid: 50, c_base: 30, c_indicator: 'litmus',
+            c_metal: 'Zn', c_metal_mass: 2.0, c_hcl_m: 1.0,
+            c_salt: 'Na', c_precip_type: 'fe2',
+            // Biology
+            b_light: 3500, b_co2: 0.04, b_temp: 28,
+            b_sample: 'fresh_liver', b_h2o2_conc: 3.0,
+            b_parent1: 'Aa', b_parent2: 'Aa', b_trait: 'flower',
+            // Astronomy
+            a_speed: 0.12
+        };
+
+        function setupControlsAndTelemetry() {
+            const slidersContainer = document.getElementById('slidersContainer');
+            const startBtn = document.getElementById('btn-start-sim');
+            const actionBtnGroup = document.getElementById('actionBtnGroup');
+
+            if ((currentSubject === 'physics' && (currentSubExp === 'spring' || currentSubExp === 'pendulum' || currentSubExp === 'projectile')) ||
+                (currentSubject === 'chemistry' && currentSubExp === 'precipitate')) {
+                startBtn.style.display = 'flex';
+                startBtn.innerText = currentSubExp === 'precipitate' ? '▶ Bắt Đầu Rót Chất & Trộn' : '▶ Bắt Đầu Thí Nghiệm';
+                startBtn.onclick = () => {
+                    simTime = 0;
+                    physRunning = true;
+                    physStopped = false;
+                    precipParticles = [];
+                };
+            } else {
+                startBtn.style.display = 'flex';
+                startBtn.innerText = '▶ Chạy / Làm Mới';
+                startBtn.onclick = () => { simTime = 0; b_bubbles = []; h2_bubbles = []; o2_catalase_bubbles = []; total_o2_ml = 0; total_h2_ml = 0; };
+            }
+
+            document.getElementById('btn-reset-sim').onclick = () => {
+                simTime = 0; physRunning = false; physStopped = false;
+                b_bubbles = []; h2_bubbles = []; o2_catalase_bubbles = []; precipParticles = []; total_o2_ml = 0; total_h2_ml = 0;
+            };
+
+            let htmlControls = '';
+            let btnSwitch = document.getElementById('btn-toggle-switch'); 
+            if (btnSwitch) btnSwitch.style.display = 'none';
+
+            if (currentSubject === 'physics') {
+                if (currentSubExp === 'spring') {
+                    htmlControls = `
+                        <div class="control-item"><label>Khối lượng m: <span id="v_m">${params.p_mass} kg</span></label><input type="range" min="0.1" max="2.0" step="0.1" value="${params.p_mass}" oninput="params.p_mass=+this.value; document.getElementById('v_m').innerText=this.value+' kg';"></div>
+                        <div class="control-item"><label>Độ cứng lò xo k: <span id="v_k">${params.p_k} N/m</span></label><input type="range" min="10" max="150" step="5" value="${params.p_k}" oninput="params.p_k=+this.value; document.getElementById('v_k').innerText=this.value+' N/m';"></div>
+                        <div class="control-item"><label>Hệ số Ma sát / Cản: <span id="v_damp">${params.p_damping} N·s/m</span></label><input type="range" min="0.02" max="0.4" step="0.02" value="${params.p_damping}" oninput="params.p_damping=+this.value; document.getElementById('v_damp').innerText=this.value+' N·s/m';"></div>
+                        <div class="control-item"><label>Trọng lực g:</label><select onchange="params.p_g=+this.value;"><option value="9.8" ${params.p_g===9.8?'selected':''}>Trái Đất (9.8 m/s²)</option><option value="1.6" ${params.p_g===1.6?'selected':''}>Mặt Trăng (1.6 m/s²)</option><option value="24.8" ${params.p_g===24.8?'selected':''}>Sao Mộc (24.8 m/s²)</option></select></div>`;
+                } else if (currentSubExp === 'pendulum') {
+                    htmlControls = `
+                        <div class="control-item"><label>Chiều dài dây L: <span id="v_l">${params.p_len} m</span></label><input type="range" min="0.5" max="3.0" step="0.1" value="${params.p_len}" oninput="params.p_len=+this.value; document.getElementById('v_l').innerText=this.value+' m';"></div>
+                        <div class="control-item"><label>Góc lệch TỐI ĐA (α_max): <span id="v_amax">${params.p_alpha_max}°</span></label><input type="range" min="5" max="90" step="5" value="${params.p_alpha_max}" oninput="params.p_alpha_max=+this.value; document.getElementById('v_amax').innerText=this.value+'°';"></div>
+                        <div class="control-item"><label>Hệ số Cản không khí: <span id="v_damp">${params.p_damping} N·s/m</span></label><input type="range" min="0.02" max="0.3" step="0.02" value="${params.p_damping}" oninput="params.p_damping=+this.value; document.getElementById('v_damp').innerText=this.value+' N·s/m';"></div>`;
+                } else if (currentSubExp === 'projectile') {
+                    htmlControls = `
+                        <div class="control-item"><label>Vận tốc v₀: <span id="v_v0">${params.p_v0} m/s</span></label><input type="range" min="5" max="50" step="1" value="${params.p_v0}" oninput="params.p_v0=+this.value; document.getElementById('v_v0').innerText=this.value+' m/s';"></div>
+                        <div class="control-item"><label>Góc ném α: <span id="v_deg">${params.p_deg}°</span></label><input type="range" min="0" max="85" step="5" value="${params.p_deg}" oninput="params.p_deg=+this.value; document.getElementById('v_deg').innerText=this.value+'°';"></div>
+                        <div class="control-item"><label>Độ cao ban đầu h₀: <span id="v_h0">${params.p_h0} m</span></label><input type="range" min="0" max="30" step="2" value="${params.p_h0}" oninput="params.p_h0=+this.value; document.getElementById('v_h0').innerText=this.value+' m';"></div>`;
+                } else if (currentSubExp === 'refraction') {
+                    htmlControls = `
+                        <div class="control-item"><label>Chiết suất môi trường 1 (n₁): <span id="v_n1">${params.p_n1}</span></label><input type="range" min="1.0" max="2.0" step="0.05" value="${params.p_n1}" oninput="params.p_n1=+this.value; document.getElementById('v_n1').innerText=this.value;"></div>
+                        <div class="control-item"><label>Chiết suất môi trường 2 (n₂): <span id="v_n2">${params.p_n2}</span></label><input type="range" min="1.0" max="2.5" step="0.05" value="${params.p_n2}" oninput="params.p_n2=+this.value; document.getElementById('v_n2').innerText=this.value;"></div>
+                        <div class="control-item"><label>Góc tới (i): <span id="v_inci">${params.p_incident_i}°</span></label><input type="range" min="0" max="85" step="1" value="${params.p_incident_i}" oninput="params.p_incident_i=+this.value; document.getElementById('v_inci').innerText=this.value+'°';"></div>`;
+                } else if (currentSubExp === 'circuits') {
+                    htmlControls = `
+                        <div class="control-item"><label>Chế Độ Hiển Thị:</label><select onchange="params.p_circuit_view=this.value;"><option value="schematic" ${params.p_circuit_view==='schematic'?'selected':''}>📐 Sơ Đồ Nguyên Lý Chuẩn ISO</option><option value="assembly" ${params.p_circuit_view==='assembly'?'selected':''}>🔌 Mô hình Lắp Ghép Thực Tế</option></select></div>
+                        <div class="control-item"><label>Cấu Hình Lắp Mạch:</label><select onchange="params.p_circuit_config=this.value;"><option value="parallel" ${params.p_circuit_config==='parallel'?'selected':''}>Ghép Song Song (2 Đèn)</option><option value="single" ${params.p_circuit_config==='single'?'selected':''}>Mạch đơn (1 Đèn + 1 R)</option><option value="series" ${params.p_circuit_config==='series'?'selected':''}>Ghép Nối Tiếp (2 Đèn)</option><option value="meters" ${params.p_circuit_config==='meters'?'selected':''}>Mạch tích hợp Ampe kế & Vôn kế</option></select></div>
+                        <div class="control-item"><label>Điện áp Nguồn Pin (U): <span id="v_volt">${params.p_voltage} V</span></label><input type="range" min="1" max="24" step="1" value="${params.p_voltage}" oninput="params.p_voltage=+this.value; document.getElementById('v_volt').innerText=this.value+' V';"></div>
+                        <div class="control-item"><label>Điện trở R₁ (Đèn 1): <span id="v_res1">${params.p_resistor} Ω</span></label><input type="range" min="2" max="50" step="2" value="${params.p_resistor}" oninput="params.p_resistor=+this.value; document.getElementById('v_res1').innerText=this.value+' Ω';"></div>
+                        <div class="control-item"><label>Điện trở R₂ (Đèn 2): <span id="v_res2">${params.p_resistor2} Ω</span></label><input type="range" min="2" max="50" step="2" value="${params.p_resistor2}" oninput="params.p_resistor2=+this.value; document.getElementById('v_res2').innerText=this.value+' Ω';"></div>`;
+
+                    if (!btnSwitch) {
+                        btnSwitch = document.createElement('button');
+                        btnSwitch.id = 'btn-toggle-switch';
+                        btnSwitch.className = 'btn-act warning';
+                        actionBtnGroup.appendChild(btnSwitch);
+                    }
+                    btnSwitch.style.display = 'flex';
+                    btnSwitch.innerText = params.p_switch_closed ? '🔌 MỞ Công Tắc K (Ngắt Mạch)' : '⚡ ĐÓNG Công Tắc K (Kín Mạch)';
+                    btnSwitch.onclick = () => {
+                        params.p_switch_closed = !params.p_switch_closed;
+                        btnSwitch.innerText = params.p_switch_closed ? '🔌 MỞ Công Tắc K (Ngắt Mạch)' : '⚡ ĐÓNG Công Tắc K (Kín Mạch)';
+                    };
+                }
+            } else if (currentSubject === 'chemistry') {
+                if (currentSubExp === 'ph') {
+                    htmlControls = `
+                        <div class="control-item"><label>Thể tích HCl (0.1M): <span id="v_acid">${params.c_acid} ml</span></label><input type="range" min="0" max="100" step="5" value="${params.c_acid}" oninput="params.c_acid=+this.value; document.getElementById('v_acid').innerText=this.value+' ml';"></div>
+                        <div class="control-item"><label>Thể tích NaOH (0.1M): <span id="v_base">${params.c_base} ml</span></label><input type="range" min="0" max="100" step="5" value="${params.c_base}" oninput="params.c_base=+this.value; document.getElementById('v_base').innerText=this.value+' ml';"></div>
+                        <div class="control-item"><label>Chất chỉ thị màu:</label><select onchange="params.c_indicator=this.value;"><option value="litmus" ${params.c_indicator==='litmus'?'selected':''}>Dung dịch Quỳ Tím</option><option value="phenolphthalein" ${params.c_indicator==='phenolphthalein'?'selected':''}>Phenolphthalein</option></select></div>`;
+                } else if (currentSubExp === 'metal') {
+                    htmlControls = `
+                        <div class="control-item"><label>Chọn Kim Loại:</label><select onchange="params.c_metal=this.value;"><option value="Mg" ${params.c_metal==='Mg'?'selected':''}>Magie (Mg) - Phản ứng rất mạnh</option><option value="Zn" ${params.c_metal==='Zn'?'selected':''}>Kẽm (Zn) - Phản ứng vừa phải</option><option value="Fe" ${params.c_metal==='Fe'?'selected':''}>Sắt (Fe) - Phản ứng chậm</option><option value="Cu" ${params.c_metal==='Cu'?'selected':''}>Đồng (Cu) - Không phản ứng</option></select></div>
+                        <div class="control-item"><label>Khối lượng Kim loại: <span id="v_mmass">${params.c_metal_mass} g</span></label><input type="range" min="0.5" max="5.0" step="0.5" value="${params.c_metal_mass}" oninput="params.c_metal_mass=+this.value; document.getElementById('v_mmass').innerText=this.value+' g';"></div>
+                        <div class="control-item"><label>Nồng độ HCl: <span id="v_hcl">${params.c_hcl_m} M</span></label><input type="range" min="0.5" max="3.0" step="0.5" value="${params.c_hcl_m}" oninput="params.c_hcl_m=+this.value; document.getElementById('v_hcl').innerText=this.value+' M';"></div>`;
+                } else if (currentSubExp === 'flame') {
+                    htmlControls = `
+                        <div class="control-item"><label>Chọn Muối Kim Loại:</label><select onchange="params.c_salt=this.value;"><option value="Na" ${params.c_salt==='Na'?'selected':''}>Natri (Na⁺) - Muối Ăn NaCl</option><option value="Cu" ${params.c_salt==='Cu'?'selected':''}>Đồng (Cu²⁺) - Muối CuSO₄</option><option value="K" ${params.c_salt==='K'?'selected':''}>Kali (K⁺) - Muối KCl</option><option value="Li" ${params.c_salt==='Li'?'selected':''}>Liti (Li⁺) - Muối LiCl</option></select></div>`;
+                } else if (currentSubExp === 'precipitate') {
+                    htmlControls = `
+                        <div class="control-item"><label>Phản Ứng Kết Tủa:</label><select onchange="params.c_precip_type=this.value; simTime=0; physRunning=false; precipParticles=[];"><option value="fe2" ${params.c_precip_type==='fe2'?'selected':''}>FeCl₂ + NaOH → Fe(OH)₂↓ (Trắng xanh)</option><option value="fe3" ${params.c_precip_type==='fe3'?'selected':''}>FeCl₃ + NaOH → Fe(OH)₃↓ (Nâu đỏ)</option><option value="cu" ${params.c_precip_type==='cu'?'selected':''}>CuSO₄ + NaOH → Cu(OH)₂↓ (Xanh lam)</option></select></div>
+                        <p style="font-size:0.85rem; color:var(--text-muted); grid-column: 1 / -1;">💡 <b>Hướng dẫn:</b> Chọn phản ứng rồi nhấn nút <b>"▶ Bắt Đầu Rót Chất & Trộn"</b> để quan sát ống nghiệm nhỏ NaOH xuống cốc và tạo vệt kết tủa chìm xuống đáy.</p>`;
+                }
+            } else if (currentSubject === 'biology') {
+                if (currentSubExp === 'photo') {
+                    htmlControls = `
+                        <div class="control-item"><label>Cường độ ánh sáng: <span id="v_light">${params.b_light} Lux</span></label><input type="range" min="0" max="10000" step="250" value="${params.b_light}" oninput="params.b_light=+this.value; document.getElementById('v_light').innerText=this.value+' Lux';"></div>
+                        <div class="control-item"><label>Nồng độ CO₂: <span id="v_co2">${params.b_co2}%</span></label><input type="range" min="0.005" max="0.1" step="0.005" value="${params.b_co2}" oninput="params.b_co2=+this.value; document.getElementById('v_co2').innerText=this.value+'%';"></div>
+                        <div class="control-item"><label>Nhiệt độ: <span id="v_temp">${params.b_temp} °C</span></label><input type="range" min="5" max="50" step="1" value="${params.b_temp}" oninput="params.b_temp=+this.value; document.getElementById('v_temp').innerText=this.value+' °C';"></div>`;
+                } else if (currentSubExp === 'catalase') {
+                    htmlControls = `
+                        <div class="control-item"><label>Mẫu Sinh Học (Chứa Enzim Catalase):</label><select onchange="params.b_sample=this.value;"><option value="fresh_liver" ${params.b_sample==='fresh_liver'?'selected':''}>Gan lợn tươi (Chứa nhiều Enzim)</option><option value="boiled_liver" ${params.b_sample==='boiled_liver'?'selected':''}>Gan chín / luộc (Enzim bị biến tính)</option><option value="fresh_potato" ${params.b_sample==='fresh_potato'?'selected':''}>Khoai tây sống (Enzim vừa phải)</option></select></div>
+                        <div class="control-item"><label>Nồng độ H₂O₂: <span id="v_h2o2">${params.b_h2o2_conc}%</span></label><input type="range" min="0.5" max="10.0" step="0.5" value="${params.b_h2o2_conc}" oninput="params.b_h2o2_conc=+this.value; document.getElementById('v_h2o2').innerText=this.value+'%';"></div>
+                        <div class="control-item"><label>Nhiệt độ môi trường: <span id="v_btemp">${params.b_temp} °C</span></label><input type="range" min="0" max="80" step="5" value="${params.b_temp}" oninput="params.b_btemp').innerText=this.value+' °C';"></div>`;
+                } else if (currentSubExp === 'mendel') {
+                    htmlControls = `
+                        <div class="control-item"><label>Kiểu gen Cây Bố P1:</label><select onchange="params.b_parent1=this.value;"><option value="AA" ${params.b_parent1==='AA'?'selected':''}>AA (Đồng hợp trội - Hoa Đỏ)</option><option value="Aa" ${params.b_parent1==='Aa'?'selected':''}>Aa (Dị hợp - Hoa Đỏ)</option><option value="aa" ${params.b_parent1==='aa'?'selected':''}>aa (Đồng hợp lặn - Hoa Trắng)</option></select></div>
+                        <div class="control-item"><label>Kiểu gen Cây Mẹ P2:</label><select onchange="params.b_parent2=this.value;"><option value="AA" ${params.b_parent2==='AA'?'selected':''}>AA (Đồng hợp trội - Hoa Đỏ)</option><option value="Aa" ${params.b_parent2==='Aa'?'selected':''}>Aa (Dị hợp - Hoa Đỏ)</option><option value="aa" ${params.b_parent2==='aa'?'selected':''}>aa (Đồng hợp lặn - Hoa Trắng)</option></select></div>
+                        <div class="control-item"><label>Chọn Tính Trạng:</label><select onchange="params.b_trait=this.value;"><option value="flower" ${params.b_trait==='flower'?'selected':''}>Màu hoa Đậu Hà Lan (Đỏ / Trắng)</option><option value="seed" ${params.b_trait==='seed'?'selected':''}>Hình dạng hạt (Tròn / Nhăn)</option><option value="color" ${params.b_trait==='color'?'selected':''}>Màu sắc hạt (Vàng / Xanh)</option></select></div>`;
+                }
+            } else if (currentSubject === 'astronomy') {
+                htmlControls = `
+                    <div class="control-item"><label>Tốc độ Quỹ đạo: <span id="v_aspeed">${params.a_speed}x</span></label><input type="range" min="0.02" max="0.5" step="0.02" value="${params.a_speed}" oninput="params.a_speed=+this.value; document.getElementById('v_aspeed').innerText=(+this.value).toFixed(2)+'x';"></div>
+                    <p style="font-size:0.85rem; color:var(--text-muted); grid-column: 1 / -1;">💡 <b>Gợi ý:</b> Nhấp chuột trực tiếp vào hành tinh trên màn hình để xem dữ liệu đơn vị km, ngày/năm. Nhấn nút <b>✕</b> ở góc bảng để tắt khung thông tin.</p>`;
+            }
+            slidersContainer.innerHTML = htmlControls;
+        }
+
+        let b_bubbles = [], h2_bubbles = [], o2_catalase_bubbles = [], precipParticles = [];
+        let total_o2_ml = 0, total_h2_ml = 0;
+
+        function loop() {
+            if (mainCanvas.width === 0 || mainCanvas.height === 0) resizeCanvas();
+            ctx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+
+            if (currentSubject === 'physics') drawPhysics();
+            else if (currentSubject === 'chemistry') drawChemistry();
+            else if (currentSubject === 'biology') drawBiology();
+            else if (currentSubject === 'astronomy') drawAstronomy();
+
+            animFrameId = requestAnimationFrame(loop);
+        }
+
+        // 1. PHYSICS
+        function drawPhysics() {
+            const w = mainCanvas.width || 800, h = mainCanvas.height || 500, cx = w / 2, cy = h / 2;
+            const tele = document.getElementById('telemetryContainer');
+
+            if (physRunning) simTime += 0.016;
+
+            if (currentSubExp === 'spring') {
+                // --- CON LẮC LÒ XO ĐỨNG THẲNG ---
+                const omega = Math.sqrt(params.p_k / params.p_mass);
+                const period = 2 * Math.PI / omega;
+                const amp0 = 110;
+                const currentAmp = amp0 * Math.exp(-params.p_damping * simTime);
+                const yDisplacement = currentAmp * Math.cos(omega * simTime);
+                const v = -currentAmp * (omega * Math.sin(omega * simTime) + params.p_damping * Math.cos(omega * simTime));
+
+                if (currentAmp < 0.8 && physRunning) {
+                    physRunning = false;
+                    physStopped = true;
+                }
+
+                const ke = 0.5 * params.p_mass * (v * 0.01)**2;
+                const pe = 0.5 * params.p_k * (yDisplacement * 0.01)**2;
+                let statusStr = physRunning ? '<span style="color:#4ade80">Đang dao động đứng</span>' : (physStopped ? '<span style="color:#ef4444">Đã dừng hẳn (Do ma sát)</span>' : '<span style="color:#fbbf24">Sẵn sàng</span>');
+
+                tele.innerHTML = `
+                    <div class="tele-row"><span class="tele-label">Trạng thái:</span><span class="tele-val">${statusStr}</span></div>
+                    <div class="tele-row"><span class="tele-label">Thời gian t:</span><span class="tele-val">${simTime.toFixed(2)} s</span></div>
+                    <div class="tele-row"><span class="tele-label">Biên độ A(t):</span><span class="tele-val">${(currentAmp/10).toFixed(2)} cm</span></div>
+                    <div class="tele-row"><span class="tele-label">Hệ số ma sát / cản:</span><span class="tele-val">${params.p_damping} N·s/m</span></div>
+                    <div class="tele-row"><span class="tele-label">Chu kỳ T:</span><span class="tele-val">${period.toFixed(2)} s</span></div>
+                    <div class="tele-row"><span class="tele-label">Động năng Wđ:</span><span class="tele-val">${ke.toFixed(4)} J</span></div>
+                    <div class="tele-row"><span class="tele-label">Thế năng Wt:</span><span class="tele-val">${pe.toFixed(4)} J</span></div>
+                `;
+
+                // Ceiling support at top
+                const ceilingY = 50;
+                ctx.fillStyle = '#334155'; ctx.fillRect(cx - 110, ceilingY - 15, 220, 15);
+                ctx.fillStyle = '#475569'; ctx.fillRect(cx - 20, ceilingY, 40, 8);
+
+                // Spring equilibrium & mass position
+                const eqY = cy + 10;
+                const currY = eqY + (physStopped ? 0 : yDisplacement);
+
+                // Draw Vertical Spring Coils from ceilingY + 8 to currY
+                const startY = ceilingY + 8;
+                const coils = 22;
+                const stepY = (currY - startY) / coils;
+
+                ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(cx, startY);
+                for (let i = 1; i <= coils; i++) {
+                    const coilX = cx + (i === coils ? 0 : (i % 2 === 1 ? -20 : 20));
+                    ctx.lineTo(coilX, startY + i * stepY);
+                }
+                ctx.stroke();
+
+                // Draw Mass Block hanging vertically
+                const size = 42 + params.p_mass * 18;
+                ctx.fillStyle = '#0284c7'; ctx.shadowColor = '#38bdf8'; ctx.shadowBlur = 15;
+                ctx.fillRect(cx - size/2, currY, size, size); ctx.shadowBlur = 0;
+                ctx.strokeStyle = '#e0f2fe'; ctx.lineWidth = 2; ctx.strokeRect(cx - size/2, currY, size, size);
+
+                // Label on mass block
+                ctx.fillStyle = '#ffffff'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(params.p_mass + ' kg', cx, currY + size/2);
+
+                // Equilibrium Line Indicator
+                ctx.strokeStyle = 'rgba(234, 179, 8, 0.4)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
+                ctx.beginPath(); ctx.moveTo(cx - 80, eqY + size/2); ctx.lineTo(cx + 80, eqY + size/2); ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.fillStyle = '#eab308'; ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+                ctx.fillText('Vị trí cân bằng VTCB', cx + 85, eqY + size/2);
+
+            } else if (currentSubExp === 'pendulum') {
+                const omega = Math.sqrt(9.8 / params.p_len);
+                const period = 2 * Math.PI / omega;
+                const thetaMaxRad = params.p_alpha_max * Math.PI / 180;
+                const currentThetaMax = thetaMaxRad * Math.exp(-params.p_damping * simTime);
+                const theta = currentThetaMax * Math.cos(omega * simTime);
+
+                if (currentThetaMax < 0.008 && physRunning) {
+                    physRunning = false;
+                    physStopped = true;
+                }
+
+                let statusStr = physRunning ? '<span style="color:#4ade80">Đang đu đưa</span>' : (physStopped ? '<span style="color:#ef4444">Đã dừng hẳn (Lực cản)</span>' : '<span style="color:#fbbf24">Sẵn sàng</span>');
+
+                tele.innerHTML = `
+                    <div class="tele-row"><span class="tele-label">Trạng thái:</span><span class="tele-val">${statusStr}</span></div>
+                    <div class="tele-row"><span class="tele-label">Góc TỐI ĐA Cài Đặt (α_max):</span><span class="tele-val" style="color:#38bdf8">${params.p_alpha_max}°</span></div>
+                    <div class="tele-row"><span class="tele-label">Góc Tối Đa Hiện Tại:</span><span class="tele-val">${(currentThetaMax*180/Math.PI).toFixed(1)}°</span></div>
+                    <div class="tele-row"><span class="tele-label">Hệ số Cản không khí:</span><span class="tele-val">${params.p_damping} N·s/m</span></div>
+                    <div class="tele-row"><span class="tele-label">Góc Lệch Thời Gian Thực θ(t):</span><span class="tele-val">${(theta*180/Math.PI).toFixed(1)}°</span></div>
+                    <div class="tele-row"><span class="tele-label">Chu kỳ T:</span><span class="tele-val">${period.toFixed(2)} s</span></div>
+                `;
+
+                const px = cx, py = 80, pixelsPerM = 120;
+                const renderTheta = physStopped ? 0 : theta;
+                const bobX = px + params.p_len * pixelsPerM * Math.sin(renderTheta);
+                const bobY = py + params.p_len * pixelsPerM * Math.cos(renderTheta);
+
+                ctx.fillStyle = '#475569'; ctx.fillRect(px - 100, py - 10, 200, 10);
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)'; ctx.lineWidth = 2; ctx.setLineDash([]);
+                ctx.beginPath();
+                ctx.arc(px, py, params.p_len * pixelsPerM, Math.PI/2 - thetaMaxRad, Math.PI/2 + thetaMaxRad);
+                ctx.stroke();
+
+                ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(bobX, bobY); ctx.stroke();
+                ctx.fillStyle = '#38bdf8'; ctx.shadowColor = '#38bdf8'; ctx.shadowBlur = 15;
+                ctx.beginPath(); ctx.arc(bobX, bobY, 18, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+
+            } else if (currentSubExp === 'projectile') {
+                const rad = params.p_deg * Math.PI / 180;
+                const vx = params.p_v0 * Math.cos(rad), vy0 = params.p_v0 * Math.sin(rad);
+                const t_flight = (vy0 + Math.sqrt(vy0**2 + 2 * 9.8 * params.p_h0)) / 9.8;
+                const R = vx * t_flight, Hmax = params.p_h0 + (vy0**2) / (2 * 9.8);
+                let curT = simTime;
+                if (curT >= t_flight && physRunning) {
+                    curT = t_flight;
+                    physRunning = false;
+                    physStopped = true;
+                }
+
+                let statusStr = physRunning ? '<span style="color:#4ade80">Đang bay</span>' : (physStopped ? '<span style="color:#ef4444">Đã chạm đất (Dừng lại)</span>' : '<span style="color:#fbbf24">Sẵn sàng</span>');
+
+                tele.innerHTML = `
+                    <div class="tele-row"><span class="tele-label">Trạng thái:</span><span class="tele-val">${statusStr}</span></div>
+                    <div class="tele-row"><span class="tele-label">Thời gian bay:</span><span class="tele-val">${(physRunning||physStopped ? curT : 0).toFixed(2)} / ${t_flight.toFixed(2)} s</span></div>
+                    <div class="tele-row"><span class="tele-label">Tầm xa R:</span><span class="tele-val">${R.toFixed(1)} m</span></div>
+                    <div class="tele-row"><span class="tele-label">Tầm cao Hmax:</span><span class="tele-val">${Hmax.toFixed(1)} m</span></div>
+                `;
+
+                const startX = 80, startY = h - 80 - params.p_h0 * 5;
+                ctx.fillStyle = '#1e293b'; ctx.fillRect(0, h - 80, w, 80);
+                ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(0, h - 80); ctx.lineTo(w, h - 80); ctx.stroke();
+
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)'; ctx.lineWidth = 3;
+                ctx.beginPath();
+                for (let t = 0; t <= t_flight; t += 0.05) {
+                    const px = startX + vx * t * 8;
+                    const py = startY - (vy0 * t - 0.5 * 9.8 * t**2) * 5;
+                    if (t === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+
+                const activeT = (physRunning || physStopped) ? curT : 0;
+                const bx = startX + vx * activeT * 8;
+                const by = startY - (vy0 * activeT - 0.5 * 9.8 * activeT**2) * 5;
+
+                ctx.fillStyle = '#fbbf24'; ctx.shadowColor = '#fbbf24'; ctx.shadowBlur = 15;
+                ctx.beginPath(); ctx.arc(bx, by, 10, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+
+            } else if (currentSubExp === 'refraction') {
+                const iRad = params.p_incident_i * Math.PI / 180;
+                const sinR = (params.p_n1 / params.p_n2) * Math.sin(iRad);
+                let totalReflection = false, rRad = 0;
+
+                if (sinR > 1.0) totalReflection = true;
+                else rRad = Math.asin(sinR);
+
+                const limitAngleDeg = params.p_n1 > params.p_n2 ? (Math.asin(params.p_n2 / params.p_n1) * 180 / Math.PI).toFixed(1) : 'Không có';
+
+                tele.innerHTML = `
+                    <div class="tele-row"><span class="tele-label">Định luật Snell:</span><span class="tele-val">n₁ sin(i) = n₂ sin(r)</span></div>
+                    <div class="tele-row"><span class="tele-label">Góc tới i:</span><span class="tele-val">${params.p_incident_i}°</span></div>
+                    <div class="tele-row"><span class="tele-label">Góc khúc xạ r:</span><span class="tele-val">${totalReflection ? 'Phản xạ toàn phần' : (rRad*180/Math.PI).toFixed(1)+'°'}</span></div>
+                    <div class="tele-row"><span class="tele-label">Góc giới hạn i_gh:</span><span class="tele-val">${limitAngleDeg === 'Không có' ? 'Không có' : limitAngleDeg + '°'}</span></div>
+                `;
+
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.9)'; ctx.fillRect(0, 0, w, h/2);
+                ctx.fillStyle = 'rgba(56, 189, 248, 0.2)'; ctx.fillRect(0, h/2, w, h/2);
+                ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke();
+
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
+                ctx.beginPath(); ctx.moveTo(cx, 50); ctx.lineTo(cx, h - 50); ctx.stroke();
+                ctx.setLineDash([]);
+
+                const rayLen = 220;
+                const incidentX = cx - rayLen * Math.sin(iRad);
+                const incidentY = h/2 - rayLen * Math.cos(iRad);
+
+                ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 4; ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 10;
+                ctx.beginPath(); ctx.moveTo(incidentX, incidentY); ctx.lineTo(cx, h/2); ctx.stroke();
+
+                if (totalReflection) {
+                    const reflectX = cx + rayLen * Math.sin(iRad);
+                    const reflectY = h/2 - rayLen * Math.cos(iRad);
+                    ctx.strokeStyle = '#fbbf24';
+                    ctx.beginPath(); ctx.moveTo(cx, h/2); ctx.lineTo(reflectX, reflectY); ctx.stroke();
+                } else {
+                    const refractX = cx + rayLen * Math.sin(rRad);
+                    const refractY = h/2 + rayLen * Math.cos(rRad);
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.beginPath(); ctx.moveTo(cx, h/2); ctx.lineTo(refractX, refractY); ctx.stroke();
+                }
+                ctx.shadowBlur = 0;
+
+            } else if (currentSubExp === 'circuits') {
+                simTime += 0.016;
+                const isClosed = params.p_switch_closed;
+                const config = params.p_circuit_config;
+                const view = params.p_circuit_view;
+
+                let req = 10.0, currentI = 0, uBulb1 = 0, uBulb2 = 0;
+                const r1 = params.p_resistor, r2 = params.p_resistor2, u = params.p_voltage;
+
+                if (config === 'single' || config === 'meters') {
+                    req = r1;
+                    currentI = isClosed ? u / req : 0;
+                    uBulb1 = isClosed ? u : 0;
+                } else if (config === 'series') {
+                    req = r1 + r2;
+                    currentI = isClosed ? u / req : 0;
+                    uBulb1 = currentI * r1; uBulb2 = currentI * r2;
+                } else if (config === 'parallel') {
+                    req = (r1 * r2) / (r1 + r2);
+                    currentI = isClosed ? u / req : 0;
+                    uBulb1 = isClosed ? u : 0; uBulb2 = isClosed ? u : 0;
+                }
+
+                const configNames = {
+                    single: 'Mạch Đơn (1 Đèn + 1 R)',
+                    series: 'Mạch Nối Tiếp (2 Đèn R₁, R₂)',
+                    parallel: 'Mạch Song Song (2 Đèn Đ₁, Đ₂)',
+                    meters: 'Mạch Tích Hợp Vôn Kế & Ampe Kế'
+                };
+
+                tele.innerHTML = `
+                    <div class="tele-row"><span class="tele-label">Cấu hình mạch:</span><span class="tele-val" style="color:#fbbf24">${configNames[config]}</span></div>
+                    <div class="tele-row"><span class="tele-label">Chế độ hiển thị:</span><span class="tele-val" style="color:#38bdf8">${view==='schematic'?'📐 Sơ Đồ Nguyên Lý ISO':'🔌 Mô Hình Lắp Ghép'}</span></div>
+                    <div class="tele-row"><span class="tele-label">Công Tắc K:</span><span class="tele-val" style="color:${isClosed?'#4ade80':'#ef4444'}">${isClosed?'ĐÓNG (Kín Mạch)':'MỞ (Ngắt Mạch)'}</span></div>
+                    <div class="tele-row"><span class="tele-label">Điện trở tương đương R_tđ:</span><span class="tele-val">${req.toFixed(2)} Ω</span></div>
+                    <div class="tele-row"><span class="tele-label">Cường độ dòng điện I_tổng:</span><span class="tele-val" style="color:#fbbf24">${currentI.toFixed(2)} A</span></div>
+                    <div class="tele-row"><span class="tele-label">HĐT Đèn 1 (U₁):</span><span class="tele-val">${uBulb1.toFixed(1)} V</span></div>
+                    ${(config==='series'||config==='parallel') ? `<div class="tele-row"><span class="tele-label">HĐT Đèn 2 (U₂):</span><span class="tele-val">${uBulb2.toFixed(1)} V</span></div>` : ''}
+                `;
+
+                const boxW = 500, boxH = 260;
+                const leftX = cx - boxW/2, rightX = cx + boxW/2, topY = cy - boxH/2, bottomY = cy + boxH/2;
+                const j1X = cx - 100; // Positive junction node
+                const j2X = cx + 200; // Negative junction node
+                const branch1Y = cy - 50; // Upper branch
+                const branch2Y = cy + 50; // Lower branch
+
+                if (view === 'assembly') {
+                    // --- ASSEMBLY / BREADBOARD VIEW ---
+                    ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.roundRect(leftX - 40, topY - 40, boxW + 80, boxH + 80, 20); ctx.fill();
+                    ctx.strokeStyle = '#334155'; ctx.lineWidth = 3; ctx.stroke();
+
+                    // Main Wires:
+                    ctx.lineWidth = 6;
+                    ctx.strokeStyle = isClosed ? '#ef4444' : '#64748b'; // Positive wire
+                    if (config === 'parallel') {
+                        // 1. Positive wire from Battery -> Switch K -> J1 (Top wire)
+                        ctx.beginPath(); ctx.moveTo(leftX, topY); ctx.lineTo(j1X, topY); ctx.stroke();
+                        // 2. Vertical Positive Bus at J1: goes from topY down to branch1Y and branch2Y
+                        ctx.beginPath(); ctx.moveTo(j1X, topY); ctx.lineTo(j1X, branch2Y); ctx.stroke();
+                        // 3. Upper Branch 1: (j1X, branch1Y) -> Bulb 1 -> (j2X, branch1Y)
+                        ctx.beginPath(); ctx.moveTo(j1X, branch1Y); ctx.lineTo(j2X, branch1Y); ctx.stroke();
+                        // 4. Lower Branch 2: (j1X, branch2Y) -> Bulb 2 -> (j2X, branch2Y)
+                        ctx.beginPath(); ctx.moveTo(j1X, branch2Y); ctx.lineTo(j2X, branch2Y); ctx.stroke();
+
+                        // 5. Vertical Negative Bus at J2: goes from branch1Y down to bottomY
+                        ctx.strokeStyle = isClosed ? '#3b82f6' : '#64748b';
+                        ctx.beginPath(); ctx.moveTo(j2X, branch1Y); ctx.lineTo(j2X, bottomY); ctx.stroke();
+                        // 6. Negative Return Wire: (j2X, bottomY) -> Resistor R1 -> Battery (leftX, bottomY)
+                        ctx.beginPath(); ctx.moveTo(j2X, bottomY); ctx.lineTo(leftX, bottomY); ctx.stroke();
+                        // 7. Battery vertical wire: leftX, topY -> leftX, bottomY
+                        ctx.beginPath(); ctx.moveTo(leftX, topY); ctx.lineTo(leftX, bottomY); ctx.stroke();
+
+                        // Junction node dots:
+                        ctx.fillStyle = '#fbbf24';
+                        ctx.beginPath(); ctx.arc(j1X, topY, 6, 0, Math.PI*2); ctx.fill();
+                        ctx.beginPath(); ctx.arc(j2X, bottomY, 6, 0, Math.PI*2); ctx.fill();
+
+                        // Bulbs on parallel branches
+                        drawRealisticBulb(cx + 110, branch1Y, uBulb1, 'Đèn 1 (R₁)');
+                        drawRealisticBulb(cx + 110, branch2Y, uBulb2, 'Đèn 2 (R₂)');
+                    } else {
+                        // Single / Series / Meters Main Loop Wire
+                        ctx.beginPath(); ctx.moveTo(leftX, topY); ctx.lineTo(rightX, topY); ctx.stroke();
+                        ctx.strokeStyle = isClosed ? '#3b82f6' : '#64748b';
+                        ctx.beginPath(); ctx.moveTo(leftX, bottomY); ctx.lineTo(rightX, bottomY); ctx.stroke();
+                        ctx.beginPath(); ctx.moveTo(leftX, topY); ctx.lineTo(leftX, bottomY); ctx.stroke();
+                        ctx.beginPath(); ctx.moveTo(rightX, topY); ctx.lineTo(rightX, bottomY); ctx.stroke();
+
+                        if (config === 'single') {
+                            drawRealisticBulb(rightX, cy, uBulb1, 'Đèn 1');
+                        } else if (config === 'series') {
+                            drawRealisticBulb(rightX, cy - 60, uBulb1, 'Đèn 1 (R₁)');
+                            drawRealisticBulb(rightX, cy + 60, uBulb2, 'Đèn 2 (R₂)');
+                        } else if (config === 'meters') {
+                            drawRealisticBulb(rightX, cy, uBulb1, 'Bóng Đèn');
+                            // Ammeter in Series on Top Wire
+                            const amX = cx + 80, amY = topY;
+                            ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.arc(amX, amY, 22, 0, Math.PI*2); ctx.fill();
+                            ctx.strokeStyle = '#0284c7'; ctx.lineWidth = 3; ctx.stroke();
+                            ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('A', amX, amY + 5);
+                            ctx.font = 'bold 11px monospace'; ctx.fillText(currentI.toFixed(2) + ' A', amX, amY - 28);
+
+                            // Voltmeter in Parallel across Bulb
+                            const vmX = rightX + 70, vmY = cy;
+                            ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.arc(vmX, vmY, 22, 0, Math.PI*2); ctx.fill();
+                            ctx.strokeStyle = '#22c55e'; ctx.lineWidth = 3; ctx.stroke();
+                            ctx.fillStyle = '#4ade80'; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('V', vmX, vmY + 5);
+                            ctx.font = 'bold 11px monospace'; ctx.fillText(uBulb1.toFixed(1) + ' V', vmX, vmY - 28);
+
+                            ctx.strokeStyle = '#22c55e'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+                            ctx.beginPath(); ctx.moveTo(rightX, cy - 40); ctx.lineTo(vmX, cy - 40); ctx.lineTo(vmX, vmY - 22); ctx.stroke();
+                            ctx.beginPath(); ctx.moveTo(rightX, cy + 40); ctx.lineTo(vmX, cy + 40); ctx.lineTo(vmX, vmY + 22); ctx.stroke();
+                            ctx.setLineDash([]);
+                        }
+                    }
+
+                    // --- BATTERY (Left Vertical Wire) ---
+                    const batX = leftX, batY = cy;
+                    ctx.fillStyle = '#1e293b'; ctx.beginPath(); ctx.roundRect(batX - 22, batY - 45, 44, 90, 8); ctx.fill();
+                    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2; ctx.stroke();
+                    ctx.fillStyle = '#ef4444'; ctx.fillRect(batX - 10, batY - 53, 20, 8);
+                    ctx.fillStyle = '#f8fafc'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+                    ctx.fillText('+', batX, batY - 28);
+                    ctx.fillText('-', batX, batY + 38);
+                    ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 13px monospace';
+                    ctx.fillText(u + 'V', batX, batY + 4);
+
+                    // --- SWITCH K (Top Horizontal Wire) ---
+                    const swX = cx - 120, swY = topY;
+                    ctx.fillStyle = '#0f172a'; ctx.fillRect(swX - 30, swY - 15, 60, 30);
+                    ctx.fillStyle = '#334155'; ctx.beginPath(); ctx.arc(swX - 20, swY, 7, 0, Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(swX + 20, swY, 7, 0, Math.PI*2); ctx.fill();
+                    ctx.strokeStyle = isClosed ? '#4ade80' : '#ef4444'; ctx.lineWidth = 5;
+                    ctx.beginPath(); ctx.moveTo(swX - 20, swY);
+                    if (isClosed) ctx.lineTo(swX + 20, swY);
+                    else ctx.lineTo(swX + 15, swY - 28);
+                    ctx.stroke();
+                    ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+                    ctx.fillText('Công Tắc K (' + (isClosed?'Đóng':'Mở') + ')', swX, swY - 22);
+
+                    // --- RESISTOR R1 (Bottom Horizontal Wire) ---
+                    if (config !== 'parallel') {
+                        const resX = cx - 100, resY = bottomY;
+                        ctx.fillStyle = '#0f172a'; ctx.fillRect(resX - 35, resY - 15, 70, 30);
+                        ctx.fillStyle = '#d1d5db'; ctx.beginPath(); ctx.roundRect(resX - 30, resY - 12, 60, 24, 6); ctx.fill();
+                        ctx.fillStyle = '#ef4444'; ctx.fillRect(resX - 18, resY - 12, 6, 24);
+                        ctx.fillStyle = '#3b82f6'; ctx.fillRect(resX - 6, resY - 12, 6, 24);
+                        ctx.fillStyle = '#22c55e'; ctx.fillRect(resX + 6, resY - 12, 6, 24);
+                        ctx.fillStyle = '#94a3b8'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+                        ctx.fillText('Nguồn chính R₁', resX, resY + 28);
+                    }
+
+                    // --- ELECTRON ANIMATION PARTICLES (STRICTLY ON WIRES) ---
+                    if (isClosed && currentI > 0) {
+                        ctx.fillStyle = '#38bdf8'; ctx.shadowColor = '#38bdf8'; ctx.shadowBlur = 6;
+
+                        function getPointOnWaypoints(waypoints, distance) {
+                            let totalDist = 0;
+                            const segmentLengths = [];
+                            for (let i = 0; i < waypoints.length - 1; i++) {
+                                const dx = waypoints[i+1].x - waypoints[i].x;
+                                const dy = waypoints[i+1].y - waypoints[i].y;
+                                const len = Math.hypot(dx, dy);
+                                segmentLengths.push(len);
+                                totalDist += len;
+                            }
+                            if (totalDist === 0) return waypoints[0];
+                            let d = ((distance % totalDist) + totalDist) % totalDist;
+                            for (let i = 0; i < segmentLengths.length; i++) {
+                                if (d <= segmentLengths[i]) {
+                                    const t = d / segmentLengths[i];
+                                    return {
+                                        x: waypoints[i].x + t * (waypoints[i+1].x - waypoints[i].x),
+                                        y: waypoints[i].y + t * (waypoints[i+1].y - waypoints[i].y)
+                                    };
+                                }
+                                d -= segmentLengths[i];
+                            }
+                            return waypoints[waypoints.length - 1];
+                        }
+
+                        if (config === 'parallel') {
+                            const waypointsA = [
+                                { x: leftX, y: bottomY },
+                                { x: j2X, y: bottomY },
+                                { x: j2X, y: branch1Y },
+                                { x: j1X, y: branch1Y },
+                                { x: j1X, y: topY },
+                                { x: leftX, y: topY },
+                                { x: leftX, y: bottomY }
+                            ];
+                            const waypointsB = [
+                                { x: leftX, y: bottomY },
+                                { x: j2X, y: bottomY },
+                                { x: j2X, y: branch2Y },
+                                { x: j1X, y: branch2Y },
+                                { x: j1X, y: topY },
+                                { x: leftX, y: topY },
+                                { x: leftX, y: bottomY }
+                            ];
+
+                            const numParticles = 16;
+                            const speed = (currentI * 60 + 30);
+                            for (let i = 0; i < numParticles; i++) {
+                                const offsetA = (simTime * speed + i * 45);
+                                const ptA = getPointOnWaypoints(waypointsA, offsetA);
+                                ctx.beginPath(); ctx.arc(ptA.x, ptA.y, 4.5, 0, Math.PI*2); ctx.fill();
+
+                                const offsetB = (simTime * speed + i * 45 + 22.5);
+                                const ptB = getPointOnWaypoints(waypointsB, offsetB);
+                                ctx.beginPath(); ctx.arc(ptB.x, ptB.y, 4.5, 0, Math.PI*2); ctx.fill();
+                            }
+                        } else {
+                            const waypoints = [
+                                { x: leftX, y: bottomY },
+                                { x: rightX, y: bottomY },
+                                { x: rightX, y: topY },
+                                { x: leftX, y: topY },
+                                { x: leftX, y: bottomY }
+                            ];
+
+                            const numParticles = 20;
+                            const speed = (currentI * 60 + 30);
+                            for (let i = 0; i < numParticles; i++) {
+                                const offset = (simTime * speed + i * 50);
+                                const pt = getPointOnWaypoints(waypoints, offset);
+                                ctx.beginPath(); ctx.arc(pt.x, pt.y, 4.5, 0, Math.PI*2); ctx.fill();
+                            }
+                        }
+                        ctx.shadowBlur = 0;
+                    }
+                } else {
+                    // --- SCHEMATIC VIEW (ISO STANDARD SYMBOLS) ---
+                    ctx.fillStyle = '#030712'; ctx.fillRect(0, 0, w, h);
+                    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 3;
+
+                    if (config === 'parallel') {
+                        ctx.beginPath(); ctx.moveTo(leftX, topY); ctx.lineTo(j1X, topY); ctx.stroke();
+                        ctx.beginPath(); ctx.moveTo(j1X, topY); ctx.lineTo(j1X, branch2Y); ctx.stroke();
+                        ctx.beginPath(); ctx.moveTo(j1X, branch1Y); ctx.lineTo(j2X, branch1Y); ctx.stroke();
+                        ctx.beginPath(); ctx.moveTo(j1X, branch2Y); ctx.lineTo(j2X, branch2Y); ctx.stroke();
+                        ctx.beginPath(); ctx.moveTo(j2X, branch1Y); ctx.lineTo(j2X, bottomY); ctx.stroke();
+                        ctx.beginPath(); ctx.moveTo(j2X, bottomY); ctx.lineTo(leftX, bottomY); ctx.stroke();
+                        ctx.beginPath(); ctx.moveTo(leftX, topY); ctx.lineTo(leftX, bottomY); ctx.stroke();
+
+                        ctx.fillStyle = '#fbbf24';
+                        ctx.beginPath(); ctx.arc(j1X, topY, 5, 0, Math.PI*2); ctx.fill();
+                        ctx.beginPath(); ctx.arc(j2X, bottomY, 5, 0, Math.PI*2); ctx.fill();
+
+                        ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+                        ctx.fillText('Nút J₁ (+)', j1X, topY - 12);
+                        ctx.fillText('Nút J₂ (-)', j2X, bottomY + 22);
+
+                        drawSchematicBulb(cx + 110, branch1Y, 'Đèn 1 (R₁=' + r1 + 'Ω)', uBulb1 > 0);
+                        drawSchematicBulb(cx + 110, branch2Y, 'Đèn 2 (R₂=' + r2 + 'Ω)', uBulb2 > 0);
+                    } else {
+                        ctx.beginPath(); ctx.moveTo(leftX, topY); ctx.lineTo(rightX, topY); ctx.stroke();
+                        ctx.beginPath(); ctx.moveTo(leftX, bottomY); ctx.lineTo(rightX, bottomY); ctx.stroke();
+                        ctx.beginPath(); ctx.moveTo(leftX, topY); ctx.lineTo(leftX, bottomY); ctx.stroke();
+                        ctx.beginPath(); ctx.moveTo(rightX, topY); ctx.lineTo(rightX, bottomY); ctx.stroke();
+
+                        if (config === 'single') {
+                            drawSchematicBulb(rightX, cy, 'Đèn 1', uBulb1 > 0);
+                        } else if (config === 'series') {
+                            drawSchematicBulb(rightX, cy - 60, 'Đèn 1 (R₁=' + r1 + 'Ω)', uBulb1 > 0);
+                            drawSchematicBulb(rightX, cy + 60, 'Đèn 2 (R₂=' + r2 + 'Ω)', uBulb2 > 0);
+                        } else if (config === 'meters') {
+                            drawSchematicBulb(rightX, cy, 'Bóng Đèn', uBulb1 > 0);
+                            const amX = cx + 80, amY = topY;
+                            ctx.fillStyle = '#030712'; ctx.beginPath(); ctx.arc(amX, amY, 18, 0, Math.PI*2); ctx.fill();
+                            ctx.strokeStyle = '#0284c7'; ctx.lineWidth = 2.5; ctx.stroke();
+                            ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('A', amX, amY + 5);
+
+                            const vmX = rightX + 60, vmY = cy;
+                            ctx.fillStyle = '#030712'; ctx.beginPath(); ctx.arc(vmX, vmY, 18, 0, Math.PI*2); ctx.fill();
+                            ctx.strokeStyle = '#22c55e'; ctx.lineWidth = 2.5; ctx.stroke();
+                            ctx.fillStyle = '#4ade80'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('V', vmX, vmY + 5);
+
+                            ctx.strokeStyle = '#22c55e'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+                            ctx.beginPath(); ctx.moveTo(rightX, cy - 40); ctx.lineTo(vmX, cy - 40); ctx.lineTo(vmX, vmY - 18); ctx.stroke();
+                            ctx.beginPath(); ctx.moveTo(rightX, cy + 40); ctx.lineTo(vmX, cy + 40); ctx.lineTo(vmX, vmY + 18); ctx.stroke();
+                            ctx.setLineDash([]);
+                        }
+                    }
+
+                    const batX = leftX, batY = cy;
+                    ctx.fillStyle = '#030712'; ctx.fillRect(batX - 10, batY - 30, 20, 60);
+                    ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 4;
+                    ctx.beginPath(); ctx.moveTo(batX - 18, batY - 18); ctx.lineTo(batX + 18, batY - 18); ctx.stroke();
+                    ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 6;
+                    ctx.beginPath(); ctx.moveTo(batX - 10, batY + 18); ctx.lineTo(batX + 10, batY + 18); ctx.stroke();
+                    ctx.fillStyle = '#ef4444'; ctx.font = 'bold 14px sans-serif'; ctx.fillText('+', batX - 25, batY - 18);
+                    ctx.fillStyle = '#3b82f6'; ctx.fillText('-', batX - 25, batY + 22);
+
+                    const swX = cx - 120, swY = topY;
+                    ctx.fillStyle = '#030712'; ctx.fillRect(swX - 30, swY - 10, 60, 20);
+                    ctx.fillStyle = '#f8fafc'; ctx.beginPath(); ctx.arc(swX - 20, swY, 5, 0, Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(swX + 20, swY, 5, 0, Math.PI*2); ctx.fill();
+                    ctx.strokeStyle = isClosed ? '#4ade80' : '#ef4444'; ctx.lineWidth = 3;
+                    ctx.beginPath(); ctx.moveTo(swX - 20, swY);
+                    if (isClosed) ctx.lineTo(swX + 20, swY);
+                    else ctx.lineTo(swX + 15, swY - 22);
+                    ctx.stroke();
+                    ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+                    ctx.fillText('K (' + (isClosed?'Kín':'Mở') + ')', swX, swY - 18);
+
+                    if (config !== 'parallel') {
+                        const resX = cx - 50, resY = bottomY;
+                        ctx.fillStyle = '#030712'; ctx.fillRect(resX - 30, resY - 12, 60, 24);
+                        ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2.5;
+                        ctx.strokeRect(resX - 25, resY - 10, 50, 20);
+                        ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+                        ctx.fillText('R₁ (' + r1 + 'Ω)', resX, resY + 26);
+                    }
+                }
+            }
+        }
+
+        function drawSchematicBulb(x, y, label, isLit) {
+            ctx.fillStyle = '#030712'; ctx.beginPath(); ctx.arc(x, y, 18, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle = isLit ? '#fde047' : '#94a3b8'; ctx.lineWidth = 2.5; ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x - 12, y - 12); ctx.lineTo(x + 12, y + 12); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x + 12, y - 12); ctx.lineTo(x - 12, y + 12); ctx.stroke();
+            ctx.fillStyle = '#f8fafc'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText(label, x, y + 32);
+        }
+
+        function drawRealisticBulb(x, y, voltage, label = 'Bóng Đèn') {
+            const glowR = Math.min(50, voltage * 3.5);
+            if (voltage > 0) {
+                const bulbGlow = ctx.createRadialGradient(x, y, 5, x, y, glowR + 15);
+                bulbGlow.addColorStop(0, '#fef08a'); bulbGlow.addColorStop(1, 'rgba(253, 224, 71, 0)');
+                ctx.fillStyle = bulbGlow; ctx.beginPath(); ctx.arc(x, y, glowR + 15, 0, Math.PI*2); ctx.fill();
+            }
+            ctx.fillStyle = voltage > 0 ? '#fde047' : 'rgba(203, 213, 225, 0.4)';
+            ctx.beginPath(); ctx.arc(x, y - 8, 18, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2; ctx.stroke();
+            ctx.fillStyle = '#64748b'; ctx.fillRect(x - 8, y + 8, 16, 12);
+            ctx.fillStyle = '#94a3b8'; ctx.fillRect(x - 6, y + 20, 12, 4);
+            ctx.fillStyle = '#f8fafc'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText(label, x, y + 36);
+        }
+
+        // 2. CHEMISTRY
+        function drawChemistry() {
+            const w = mainCanvas.width || 800, h = mainCanvas.height || 500;
+            const tele = document.getElementById('telemetryContainer');
+
+            if (currentSubExp === 'ph') {
+                const net = params.c_acid - params.c_base;
+                let pH = 7.0;
+                if (net > 0) pH = (1 + Math.log10(100 / net)).toFixed(2);
+                else if (net < 0) pH = (14 - Math.log10(100 / Math.abs(net))).toFixed(2);
+                pH = Math.max(0, Math.min(14, pH));
+
+                let liquidColor = '#a855f7', envText = 'Trung tính';
+                if (params.c_indicator === 'litmus') {
+                    if (pH < 6.5) { liquidColor = '#ef4444'; envText = 'Axit (Quỳ hóa Đỏ)'; }
+                    else if (pH > 7.5) { liquidColor = '#3b82f6'; envText = 'Bazơ (Quỳ hóa Xanh)'; }
+                    else { liquidColor = '#a855f7'; envText = 'Trung tính (Quỳ màu Tím)'; }
+                } else {
+                    if (pH >= 8.3) { liquidColor = '#ec4899'; envText = 'Bazơ (Hồng Dậm)'; }
+                    else { liquidColor = 'rgba(241, 245, 249, 0.2)'; envText = 'Axit/Trung tính (Không màu)'; }
+                }
+
+                tele.innerHTML = `
+                    <div class="tele-row"><span class="tele-label">Độ pH dung dịch:</span><span class="tele-val" style="color:${pH<7?'#ef4444':(pH>7?'#3b82f6':'#a855f7')}">${pH}</span></div>
+                    <div class="tele-row"><span class="tele-label">Môi trường:</span><span class="tele-val">${envText}</span></div>
+                    <div class="tele-row"><span class="tele-label">Tổng thể tích:</span><span class="tele-val">${params.c_acid + params.c_base} mL</span></div>
+                `;
+
+                const bw = 180, bh = 240, bx = w/2 - bw/2, by = h/2 - bh/2 + 30;
+                const liquidH = Math.min(params.c_acid + params.c_base, 180) * 1.1;
+
+                ctx.fillStyle = liquidColor; ctx.beginPath();
+                ctx.roundRect(bx + 10, by + bh - liquidH - 8, bw - 20, liquidH, 0); ctx.fill();
+
+                ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 5;
+                ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx, by + bh); ctx.lineTo(bx + bw, by + bh); ctx.lineTo(bx + bw, by); ctx.stroke();
+
+            } else if (currentSubExp === 'metal') {
+                const reactionRate = { Mg: 1.0, Zn: 0.45, Fe: 0.15, Cu: 0.0 }[params.c_metal];
+                const eqText = { Mg: 'Mg + 2HCl → MgCl₂ + H₂↑', Zn: 'Zn + 2HCl → ZnCl₂ + H₂↑', Fe: 'Fe + 2HCl → FeCl₂ + H₂↑', Cu: 'Không có phản ứng xảy ra' }[params.c_metal];
+
+                simTime += 0.016;
+                const flowRateMlPerSec = reactionRate * params.c_hcl_m * (params.c_metal_mass / 2.0) * 2.5;
+                total_h2_ml += (flowRateMlPerSec * 0.016);
+
+                tele.innerHTML = `
+                    <div class="tele-row"><span class="tele-label">Phương trình:</span><span class="tele-val" style="font-size:0.75rem">${eqText}</span></div>
+                    <div class="tele-row"><span class="tele-label">Tốc độ sinh khí:</span><span class="tele-val">${flowRateMlPerSec.toFixed(2)} mL/s</span></div>
+                    <div class="tele-row"><span class="tele-label">Thể tích H₂ thu được:</span><span class="tele-val" style="color:#c084fc">${total_h2_ml.toFixed(1)} mL chuẩn</span></div>
+                `;
+
+                const bw = 180, bh = 240, bx = w/2 - bw/2, by = h/2 - bh/2 + 30;
+                ctx.fillStyle = 'rgba(56, 189, 248, 0.2)'; ctx.fillRect(bx + 10, by + 60, bw - 20, bh - 60);
+
+                ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 5;
+                ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx, by + bh); ctx.lineTo(bx + bw, by + bh); ctx.lineTo(bx + bw, by); ctx.stroke();
+
+                ctx.fillStyle = params.c_metal === 'Cu' ? '#b45309' : '#94a3b8';
+                ctx.fillRect(w/2 - 15, by + 120, 30, 100);
+
+                if (reactionRate > 0 && Math.random() < reactionRate * params.c_hcl_m * 0.5) {
+                    h2_bubbles.push({ x: w/2 + (Math.random()*40 - 20), y: by + 210, r: 12, sp: Math.random()*2 + 1.8 });
+                }
+
+                for (let i = h2_bubbles.length - 1; i >= 0; i--) {
+                    let b = h2_bubbles[i]; b.y -= b.sp;
+                    ctx.fillStyle = 'rgba(192, 132, 252, 0.85)';
+                    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = '#0f172a'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillText('H₂', b.x, b.y);
+                    if (b.y < by + 60) h2_bubbles.splice(i, 1);
+                }
+
+            } else if (currentSubExp === 'flame') {
+                const saltColors = { Na: '#fde047', Cu: '#22c55e', K: '#c084fc', Li: '#ef4444' }[params.c_salt];
+                const saltNames = { Na: 'Vàng rực (Natri Na⁺)', Cu: 'Xanh lục (Đồng Cu²⁺)', K: 'Tím hoa cà (Kali K⁺)', Li: 'Đỏ thẫm (Liti Li⁺)' }[params.c_salt];
+
+                tele.innerHTML = `
+                    <div class="tele-row"><span class="tele-label">Mẫu kim loại thử:</span><span class="tele-val">${saltNames}</span></div>
+                    <div class="tele-row"><span class="tele-label">Màu ngọn lửa đặc trưng:</span><span class="tele-val" style="color:${saltColors}">${saltColors}</span></div>
+                `;
+
+                const cx = w/2, cy = h/2 + 80;
+                ctx.fillStyle = '#475569'; ctx.fillRect(cx - 20, cy, 40, 80);
+
+                simTime += 0.016;
+                const flameH = 120 + Math.sin(simTime * 15) * 10;
+                const flameGlow = ctx.createRadialGradient(cx, cy - flameH/2, 10, cx, cy - flameH/2, 80);
+                flameGlow.addColorStop(0, saltColors); flameGlow.addColorStop(1, 'rgba(0,0,0,0)');
+
+                ctx.fillStyle = flameGlow; ctx.beginPath(); ctx.arc(cx, cy - flameH/2, 80, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = saltColors; ctx.beginPath();
+                ctx.moveTo(cx - 25, cy); ctx.quadraticCurveTo(cx, cy - flameH - 20, cx + 25, cy); ctx.fill();
+
+            } else if (currentSubExp === 'precipitate') {
+                if (physRunning) simTime += 0.016;
+
+                const pInfo = {
+                    fe2: { color: '#22c55e', initialLiquid: 'rgba(74, 222, 128, 0.2)', name: 'Fe(OH)₂↓ (Kết tủa Trắng Xanh)', eq: 'FeCl₂ + 2NaOH → Fe(OH)₂↓ + 2NaCl' },
+                    fe3: { color: '#ea580c', initialLiquid: 'rgba(251, 146, 60, 0.25)', name: 'Fe(OH)₃↓ (Kết tủa Nâu Đỏ)', eq: 'FeCl₃ + 3NaOH → Fe(OH)₃↓ + 3NaCl' },
+                    cu: { color: '#0284c7', initialLiquid: 'rgba(56, 189, 248, 0.25)', name: 'Cu(OH)₂↓ (Kết tủa Xanh Lam)', eq: 'CuSO₄ + 2NaOH → Cu(OH)₂↓ + Na₂SO₄' }
+                }[params.c_precip_type];
+
+                const maxTime = 6.0;
+                const progress = Math.min(1.0, simTime / maxTime);
+
+                let statusStr = '<span style="color:#fbbf24">Sẵn sàng (Chưa nhỏ NaOH)</span>';
+                if (physRunning && progress < 1.0) statusStr = '<span style="color:#38bdf8">Đang nhỏ NaOH & Tạo kết tủa...</span>';
+                else if (progress >= 1.0) statusStr = '<span style="color:#4ade80">Hoàn tất! Kết tủa chìm xuống đáy</span>';
+
+                tele.innerHTML = `
+                    <div class="tele-row"><span class="tele-label">Trạng thái:</span><span class="tele-val">${statusStr}</span></div>
+                    <div class="tele-row"><span class="tele-label">Phương trình:</span><span class="tele-val" style="font-size:0.75rem">${pInfo.eq}</span></div>
+                    <div class="tele-row"><span class="tele-label">Tiến trình phản ứng:</span><span class="tele-val">${(progress*100).toFixed(0)}%</span></div>
+                    <div class="tele-row"><span class="tele-label">Sản phẩm kết tủa:</span><span class="tele-val" style="color:${pInfo.color}">${pInfo.name}</span></div>
+                `;
+
+                const bw = 200, bh = 260, bx = w/2 - bw/2, by = h/2 - bh/2 + 50;
+                ctx.fillStyle = pInfo.initialLiquid; ctx.fillRect(bx + 10, by + 80, bw - 20, bh - 80);
+
+                const maxPrecipH = 50;
+                const curPrecipH = progress * maxPrecipH;
+
+                if (curPrecipH > 0) {
+                    ctx.fillStyle = pInfo.color;
+                    ctx.beginPath();
+                    ctx.roundRect(bx + 10, by + bh - curPrecipH - 6, bw - 20, curPrecipH + 6, 4);
+                    ctx.fill();
+                }
+
+                ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 5;
+                ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx, by + bh); ctx.lineTo(bx + bw, by + bh); ctx.lineTo(bx + bw, by); ctx.stroke();
+
+                const pipX = w/2, pipY = by - 120;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+                ctx.beginPath(); ctx.roundRect(pipX - 12, pipY, 24, 80, 4); ctx.fill();
+                ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2; ctx.strokeRect(pipX - 12, pipY, 24, 80);
+
+                const pipFillH = Math.max(0, (1 - progress) * 60);
+                ctx.fillStyle = 'rgba(241, 245, 249, 0.7)';
+                ctx.fillRect(pipX - 10, pipY + 80 - pipFillH, 20, pipFillH);
+                ctx.fillStyle = '#94a3b8'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText('Ống nhỏ NaOH', pipX, pipY - 10);
+
+                if (physRunning && progress < 1.0) {
+                    ctx.fillStyle = 'rgba(241, 245, 249, 0.8)';
+                    ctx.fillRect(pipX - 3, pipY + 80, 6, by + 80 - (pipY + 80));
+
+                    if (Math.random() < 0.6) {
+                        precipParticles.push({
+                            x: pipX + (Math.random()*40 - 20),
+                            y: by + 80 + Math.random()*20,
+                            r: Math.random()*6 + 4,
+                            sp: Math.random()*1.5 + 1.2
+                        });
+                    }
+                }
+
+                for (let i = precipParticles.length - 1; i >= 0; i--) {
+                    let p = precipParticles[i];
+                    p.y += p.sp;
+                    ctx.fillStyle = pInfo.color;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
+                    if (p.y >= by + bh - curPrecipH - 10) {
+                        precipParticles.splice(i, 1);
+                    }
+                }
+            }
+        }
+
+        // 3. BIOLOGY
+        function drawBiology() {
+            const w = mainCanvas.width || 800, h = mainCanvas.height || 500;
+            const tele = document.getElementById('telemetryContainer');
+
+            if (currentSubExp === 'photo') {
+                simTime += 0.016;
+                const tempFactor = params.b_temp > 38 ? Math.max(0, 1 - (params.b_temp - 38)/10) : 1.0;
+                const ratePercent = Math.round(Math.min(params.b_light/6000, 1) * Math.min(params.b_co2/0.05, 1) * tempFactor * 100);
+                const o2FlowMlPerSec = (ratePercent / 100) * 1.2;
+                total_o2_ml += (o2FlowMlPerSec * 0.016);
+
+                tele.innerHTML = `
+                    <div class="tele-row"><span class="tele-label">Tốc độ quang hợp:</span><span class="tele-val">${ratePercent}%</span></div>
+                    <div class="tele-row"><span class="tele-label">Tốc độ thoát O₂:</span><span class="tele-val">${o2FlowMlPerSec.toFixed(2)} mL/s</span></div>
+                    <div class="tele-row"><span class="tele-label">Thể tích O₂ tích lũy:</span><span class="tele-val" style="color:#4ade80">${total_o2_ml.toFixed(1)} mL chuẩn</span></div>
+                `;
+
+                const g = ctx.createLinearGradient(0, 0, 0, h);
+                g.addColorStop(0, '#0284c7'); g.addColorStop(1, '#0f172a');
+                ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+
+                const alpha = Math.min(params.b_light / 10000, 0.7);
+                ctx.fillStyle = `rgba(253, 224, 71, ${alpha*0.3})`;
+                ctx.beginPath(); ctx.moveTo(w/2 - 100, 0); ctx.lineTo(w/2 + 100, 0); ctx.lineTo(w/2 + 220, h); ctx.lineTo(w/2 - 220, h); ctx.fill();
+
+                const px = w/2, py = h - 50;
+                ctx.strokeStyle = '#22c55e'; ctx.lineWidth = 8;
+                ctx.beginPath(); ctx.moveTo(px, py); ctx.quadraticCurveTo(px - 30, py - 120, px, py - 240); ctx.stroke();
+
+                ctx.fillStyle = '#4ade80';
+                for (let i = 1; i <= 5; i++) {
+                    const ly = py - i * 40;
+                    ctx.beginPath(); ctx.ellipse(px - 25, ly, 28, 10, -Math.PI/6, 0, Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.ellipse(px + 25, ly, 28, 10, Math.PI/6, 0, Math.PI*2); ctx.fill();
+                }
+
+                if (Math.random() < (ratePercent/100) * 0.25) {
+                    b_bubbles.push({ x: px + (Math.random()*40 - 20), y: py - 220, r: 13, sp: Math.random()*2 + 1.5 });
+                }
+
+                for (let i = b_bubbles.length - 1; i >= 0; i--) {
+                    let b = b_bubbles[i]; b.y -= b.sp;
+                    ctx.fillStyle = 'rgba(74, 222, 128, 0.9)';
+                    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = '#0f172a'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillText('O₂', b.x, b.y);
+                    if (b.y < 0) b_bubbles.splice(i, 1);
+                }
+
+            } else if (currentSubExp === 'catalase') {
+                simTime += 0.016;
+                let sampleFactor = { fresh_liver: 1.0, boiled_liver: 0.0, fresh_potato: 0.4 }[params.b_sample];
+                if (params.b_temp > 50 || params.b_temp < 5) sampleFactor *= 0.1;
+
+                const flowMlPerSec = sampleFactor * (params.b_h2o2_conc / 3.0) * 2.8;
+                total_o2_ml += (flowMlPerSec * 0.016);
+
+                let stateText = params.b_sample === 'boiled_liver' ? 'Luộc chín (Enzim biến tính)' : (params.b_temp > 55 ? 'Biến tính do nhiệt' : 'Hoạt động mạnh');
+
+                tele.innerHTML = `
+                    <div class="tele-row"><span class="tele-label">Mẫu kiểm tra:</span><span class="tele-val">${params.b_sample==='fresh_liver'?'Gan tươi':(params.b_sample==='boiled_liver'?'Gan chín':'Khoai tây')}</span></div>
+                    <div class="tele-row"><span class="tele-label">Trạng thái Enzim:</span><span class="tele-val">${stateText}</span></div>
+                    <div class="tele-row"><span class="tele-label">Tốc độ sinh O₂:</span><span class="tele-val">${flowMlPerSec.toFixed(2)} mL/s</span></div>
+                    <div class="tele-row"><span class="tele-label">Thể tích O₂ thu được:</span><span class="tele-val" style="color:#4ade80">${total_o2_ml.toFixed(1)} mL chuẩn</span></div>
+                `;
+
+                const tw = 120, th = 320, tx = w/2 - tw/2, ty = h/2 - th/2 + 20;
+                ctx.fillStyle = 'rgba(56, 189, 248, 0.25)'; ctx.fillRect(tx + 8, ty + 180, tw - 16, 130);
+
+                ctx.fillStyle = params.b_sample === 'boiled_liver' ? '#78350f' : (params.b_sample === 'fresh_liver' ? '#991b1b' : '#fef08a');
+                ctx.beginPath(); ctx.roundRect(tx + 20, ty + 260, tw - 40, 45, 10); ctx.fill();
+
+                ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 4;
+                ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(tx, ty + th - 20);
+                ctx.arc(tx + tw/2, ty + th - 20, tw/2, Math.PI, 0, true);
+                ctx.lineTo(tx + tw, ty); ctx.stroke();
+
+                if (sampleFactor > 0 && Math.random() < sampleFactor * 0.7) {
+                    o2_catalase_bubbles.push({ x: tx + tw/2 + (Math.random()*40 - 20), y: ty + 250, r: 12, sp: Math.random()*2.5 + 2 });
+                }
+
+                for (let i = o2_catalase_bubbles.length - 1; i >= 0; i--) {
+                    let b = o2_catalase_bubbles[i]; b.y -= b.sp;
+                    ctx.fillStyle = 'rgba(74, 222, 128, 0.9)';
+                    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = '#0f172a'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillText('O₂', b.x, b.y);
+                    if (b.y < ty) o2_catalase_bubbles.splice(i, 1);
+                }
+
+            } else if (currentSubExp === 'mendel') {
+                // --- PHẦN DI TRUYỀN MENDEL ---
+                const p1 = params.b_parent1 || 'Aa';
+                const p2 = params.b_parent2 || 'Aa';
+                const trait = params.b_trait || 'flower';
+
+                const getGametes = (genotype) => {
+                    if (genotype === 'AA') return [{ allele: 'A', prob: 1.0 }];
+                    if (genotype === 'aa') return [{ allele: 'a', prob: 1.0 }];
+                    return [{ allele: 'A', prob: 0.5 }, { allele: 'a', prob: 0.5 }];
+                };
+
+                const g1 = getGametes(p1);
+                const g2 = getGametes(p2);
+
+                const grid = [];
+                let countAA = 0, countAa = 0, countaa = 0;
+
+                g1.forEach(rowG => {
+                    const row = [];
+                    g2.forEach(colG => {
+                        let combo = rowG.allele + colG.allele;
+                        if (combo === 'aA') combo = 'Aa';
+                        const prob = rowG.prob * colG.prob;
+                        if (combo === 'AA') countAA += prob;
+                        else if (combo === 'Aa') countAa += prob;
+                        else if (combo === 'aa') countaa += prob;
+                        row.push({ genotype: combo, prob: prob, gP1: rowG.allele, gP2: colG.allele });
+                    });
+                    grid.push(row);
+                });
+
+                const domProb = countAA + countAa;
+                const recProb = countaa;
+
+                const traitConfig = {
+                    flower: {
+                        name: 'Màu hoa Đậu Hà Lan',
+                        domName: 'Hoa Đỏ (Trội A)',
+                        recName: 'Hoa Trắng (Lặn a)',
+                        drawIcon: (cx, cy, isDom) => {
+                            ctx.fillStyle = isDom ? '#ef4444' : '#f1f5f9';
+                            ctx.strokeStyle = isDom ? '#b91c1c' : '#94a3b8';
+                            ctx.lineWidth = 1.5;
+                            for (let i = 0; i < 5; i++) {
+                                const angle = (i * 72 * Math.PI) / 180;
+                                const px = cx + Math.cos(angle) * 12;
+                                const py = cy + Math.sin(angle) * 12;
+                                ctx.beginPath(); ctx.arc(px, py, 7, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                            }
+                            ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI*2); ctx.fill();
+                        }
+                    },
+                    seed: {
+                        name: 'Hình dạng hạt',
+                        domName: 'Hạt Tròn (Trội A)',
+                        recName: 'Hạt Nhăn (Lặn a)',
+                        drawIcon: (cx, cy, isDom) => {
+                            ctx.fillStyle = '#eab308';
+                            ctx.strokeStyle = '#a16207';
+                            ctx.lineWidth = 2;
+                            if (isDom) {
+                                ctx.beginPath(); ctx.arc(cx, cy, 14, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                            } else {
+                                ctx.beginPath(); ctx.arc(cx, cy, 13, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                                ctx.strokeStyle = '#713f12'; ctx.lineWidth = 1.5;
+                                ctx.beginPath(); ctx.moveTo(cx - 6, cy - 4); ctx.lineTo(cx + 4, cy + 6); ctx.stroke();
+                                ctx.beginPath(); ctx.moveTo(cx + 4, cy - 6); ctx.lineTo(cx - 4, cy + 4); ctx.stroke();
+                            }
+                        }
+                    },
+                    color: {
+                        name: 'Màu sắc hạt',
+                        domName: 'Hạt Vàng (Trội A)',
+                        recName: 'Hạt Xanh (Lặn a)',
+                        drawIcon: (cx, cy, isDom) => {
+                            ctx.fillStyle = isDom ? '#eab308' : '#22c55e';
+                            ctx.strokeStyle = isDom ? '#ca8a04' : '#15803d';
+                            ctx.lineWidth = 2;
+                            ctx.beginPath(); ctx.arc(cx, cy, 14, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                        }
+                    }
+                }[trait];
+
+                const fmtRatio = (a, b, c) => {
+                    const vals = [a, b, c].map(v => Math.round(v * 100));
+                    return `${vals[0]}% AA : ${vals[1]}% Aa : ${vals[2]}% aa`;
+                };
+
+                tele.innerHTML = `
+                    <div class="tele-row"><span class="tele-label">Tính trạng xét:</span><span class="tele-val" style="color:#4ade80">${traitConfig.name}</span></div>
+                    <div class="tele-row"><span class="tele-label">Cây Bố P₁ x Cây Mẹ P₂:</span><span class="tele-val" style="color:#fbbf24">${p1} × ${p2}</span></div>
+                    <div class="tele-row"><span class="tele-label">Tỉ lệ Kiểu gen F₁:</span><span class="tele-val">${fmtRatio(countAA, countAa, countaa)}</span></div>
+                    <div class="tele-row"><span class="tele-label">Tỉ lệ Kiểu hình F₁:</span><span class="tele-val" style="color:#38bdf8">${Math.round(domProb*100)}% ${traitConfig.domName} : ${Math.round(recProb*100)}% ${traitConfig.recName}</span></div>
+                    <div class="tele-row"><span class="tele-label">Quy luật áp dụng:</span><span class="tele-val">Định luật Phân ly Mendel (Trội hoàn toàn)</span></div>
+                `;
+
+                const startX = w / 2 - 120, startY = h / 2 - 130;
+                const cellSize = 120;
+
+                ctx.fillStyle = '#f8fafc'; ctx.font = 'bold 18px Plus Jakarta Sans, sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText(`Mô Phỏng Phép Lai Mendel - ${traitConfig.name}`, w / 2, 45);
+
+                ctx.fillStyle = '#94a3b8'; ctx.font = '600 13px Plus Jakarta Sans, sans-serif';
+                ctx.fillText(`P₁ (${p1})  ×  P₂ (${p2})`, w / 2, 70);
+
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.7)';
+                ctx.beginPath();
+                ctx.roundRect(startX - 90, startY - 45, cellSize * 2 + 110, cellSize * 2 + 65, 16);
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(74, 222, 128, 0.3)'; ctx.lineWidth = 2; ctx.stroke();
+
+                ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText(`Giao tử P₁ (Bố)`, startX + cellSize, startY - 24);
+
+                g1.forEach((g, colIdx) => {
+                    const cx = startX + (colIdx + 0.5) * cellSize;
+                    ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 18px monospace';
+                    ctx.fillText(`${g.allele} (${g.prob * 100}%)`, cx, startY - 5);
+                });
+
+                ctx.fillStyle = '#c084fc'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText(`Giao tử P₂`, startX - 45, startY - 24);
+
+                g2.forEach((g, rowIdx) => {
+                    const cy = startY + (rowIdx + 0.5) * cellSize;
+                    ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 18px monospace'; ctx.textAlign = 'center';
+                    ctx.fillText(`${g.allele}`, startX - 45, cy - 8);
+                    ctx.font = '11px monospace'; ctx.fillStyle = '#94a3b8';
+                    ctx.fillText(`(${g.prob * 100}%)`, startX - 45, cy + 10);
+                });
+
+                grid.forEach((row, rIdx) => {
+                    row.forEach((cell, cIdx) => {
+                        const cellX = startX + cIdx * cellSize + 5;
+                        const cellY = startY + rIdx * cellSize + 5;
+                        const isDominant = cell.genotype.includes('A');
+
+                        ctx.fillStyle = isDominant ? 'rgba(74, 222, 128, 0.12)' : 'rgba(239, 68, 68, 0.12)';
+                        ctx.beginPath(); ctx.roundRect(cellX, cellY, cellSize - 10, cellSize - 10, 12); ctx.fill();
+                        ctx.strokeStyle = isDominant ? 'rgba(74, 222, 128, 0.4)' : 'rgba(239, 68, 68, 0.4)';
+                        ctx.lineWidth = 1.5; ctx.stroke();
+
+                        ctx.fillStyle = '#f8fafc'; ctx.font = 'bold 22px monospace'; ctx.textAlign = 'center';
+                        ctx.fillText(cell.genotype, cellX + (cellSize - 10)/2, cellY + 32);
+
+                        traitConfig.drawIcon(cellX + (cellSize - 10)/2, cellY + 62, isDominant);
+
+                        ctx.fillStyle = '#94a3b8'; ctx.font = '600 12px sans-serif';
+                        ctx.fillText(`${cell.prob * 100}%`, cellX + (cellSize - 10)/2, cellY + 95);
+                    });
+                });
+            }
+        }
+
+        // 4. ASTRONOMY (FAMILIAR UNITS)
+        const planetsData = [
+            {
+                name: "Mặt Trời", color: "#fbbf24", r: 24, dist: 0,
+                distKm: "0 km (Tâm)", diamKm: "1,392,700 km", orbitFam: "Tâm hệ Mặt Trời", speedKms: "0 km/s", massKg: "1.989 × 10³⁰ kg", wiki: "M%E1%BA%B7t_Tr%E1%BB%9Di"
+            },
+            {
+                name: "Sao Thủy", color: "#cbd5e1", r: 5, dist: 55,
+                distKm: "57.9 triệu km", diamKm: "4,879 km", orbitFam: "88 ngày Trái Đất", speedKms: "47.36 km/s", massKg: "3.30 × 10²³ kg", wiki: "Sao_Th%E1%BB%A7y"
+            },
+            {
+                name: "Sao Kim", color: "#fef08a", r: 8, dist: 90,
+                distKm: "108.2 triệu km", diamKm: "12,104 km", orbitFam: "225 ngày Trái Đất", speedKms: "35.02 km/s", massKg: "4.87 × 10²⁴ kg", wiki: "Sao_Kim"
+            },
+            {
+                name: "Trái Đất", color: "#38bdf8", r: 9, dist: 135,
+                distKm: "149.6 triệu km", diamKm: "12,742 km", orbitFam: "365.25 ngày (1 năm)", speedKms: "29.78 km/s", massKg: "5.97 × 10²⁴ kg", wiki: "Tr%C3%A1i_%C4%90%E1%BA%A5t"
+            },
+            {
+                name: "Sao Hỏa", color: "#f87171", r: 7, dist: 180,
+                distKm: "227.9 triệu km", diamKm: "6,779 km", orbitFam: "687 ngày (1.88 năm)", speedKms: "24.07 km/s", massKg: "6.42 × 10²³ kg", wiki: "Sao_H%E1%BB%8Fa"
+            },
+            {
+                name: "Sao Mộc", color: "#fb923c", r: 16, dist: 235,
+                distKm: "778.5 triệu km", diamKm: "139,822 km", orbitFam: "11.86 năm Trái Đất", speedKms: "13.07 km/s", massKg: "1.90 × 10²⁷ kg", wiki: "Sao_M%E1%BB%99c"
+            },
+            {
+                name: "Sao Thổ", color: "#fde047", r: 13, dist: 285,
+                distKm: "1,434 triệu km (1.43 tỷ km)", diamKm: "116,460 km", orbitFam: "29.46 năm Trái Đất", speedKms: "9.68 km/s", massKg: "5.68 × 10²⁶ kg", hasRings: true, wiki: "Sao_Th%E1%BB%95"
+            },
+            {
+                name: "Sao Thiên Vương", color: "#a5f3fc", r: 11, dist: 330,
+                distKm: "2,871 triệu km (2.87 tỷ km)", diamKm: "50,724 km", orbitFam: "84.01 năm Trái Đất", speedKms: "6.80 km/s", massKg: "8.68 × 10²⁵ kg", wiki: "Sao_Thi%C3%AAn_V%C6%B0%C6%A1ng"
+            },
+            {
+                name: "Sao Hải Vương", color: "#818cf8", r: 10, dist: 370,
+                distKm: "4,495 triệu km (4.50 tỷ km)", diamKm: "49,244 km", orbitFam: "164.8 năm Trái Đất", speedKms: "5.43 km/s", massKg: "1.02 × 10²⁶ kg", wiki: "Sao_H%E1%BA%A3i_V%C6%B0%C6%A1ng"
+            }
+        ];
+
+        let astroAngles = new Array(planetsData.length).fill(0), planetPositions = [];
+
+        mainCanvas.addEventListener('click', e => {
+            if (currentSubject !== 'astronomy') return;
+            const rect = mainCanvas.getBoundingClientRect(), mx = e.clientX - rect.left, my = e.clientY - rect.top;
+            planetPositions.forEach(p => {
+                if (Math.hypot(p.x - mx, p.y - my) <= p.r + 10) showPlanetPopup(p.info);
+            });
+        });
+
+        function showPlanetPopup(p) {
+            const pop = document.getElementById('planetPopup');
+            document.getElementById('pop-name').innerText = p.name;
+            document.getElementById('pop-diam').innerText = p.diamKm;
+            document.getElementById('pop-dist-km').innerText = p.distKm;
+            document.getElementById('pop-orbit-fam').innerText = p.orbitFam;
+            document.getElementById('pop-speed-kms').innerText = p.speedKms;
+            document.getElementById('pop-mass-kg').innerText = p.massKg;
+            document.getElementById('pop-wiki-link').href = `https://vi.wikipedia.org/wiki/${p.wiki}`;
+            pop.classList.add('active');
+        }
+
+        function drawAstronomy() {
+            simTime += 0.016;
+            const w = mainCanvas.width || 800, h = mainCanvas.height || 500, cx = w / 2, cy = h / 2;
+            planetPositions = [];
+
+            const tele = document.getElementById('telemetryContainer');
+            tele.innerHTML = `
+                <div class="tele-row"><span class="tele-label">Số thiên thể:</span><span class="tele-val">Mặt Trời & 8 Hành tinh</span></div>
+                <div class="tele-row"><span class="tele-label">Đơn vị đo lường:</span><span class="tele-val">km, triệu km, Ngày/Năm</span></div>
+                <div class="tele-row"><span class="tele-label">Tốc độ chuyển động:</span><span class="tele-val">${params.a_speed.toFixed(2)}x (Mượt mà)</span></div>
+            `;
+
+            ctx.fillStyle = '#030712'; ctx.fillRect(0, 0, w, h);
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            for (let i = 0; i < 80; i++) {
+                const sx = (Math.sin(i * 99 + simTime * 0.05) * 0.5 + 0.5) * w;
+                const sy = (Math.cos(i * 33 + simTime * 0.05) * 0.5 + 0.5) * h;
+                ctx.beginPath(); ctx.arc(sx, sy, (i % 3 === 0 ? 1.5 : 0.8), 0, Math.PI*2); ctx.fill();
+            }
+
+            planetsData.forEach((p, idx) => {
+                if (idx > 0) astroAngles[idx] += (0.003 / (idx===1?0.24:(idx===2?0.62:(idx===3?1.0:(idx===4?1.88:(idx===5?11.86:(idx===6?29.46:(idx===7?84.01:164.8)))))))) * params.a_speed;
+                const angle = astroAngles[idx];
+                const px = cx + p.dist * Math.cos(angle), py = cy + p.dist * Math.sin(angle);
+                planetPositions.push({ x: px, y: py, r: p.r, info: p });
+
+                if (p.dist > 0) {
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)'; ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.arc(cx, cy, p.dist, 0, Math.PI * 2); ctx.stroke();
+                }
+
+                if (idx === 0) {
+                    const sunGlow = ctx.createRadialGradient(cx, cy, 5, cx, cy, 60);
+                    sunGlow.addColorStop(0, '#fef08a'); sunGlow.addColorStop(0.4, 'rgba(251, 191, 36, 0.8)'); sunGlow.addColorStop(1, 'rgba(251, 191, 36, 0)');
+                    ctx.fillStyle = sunGlow; ctx.beginPath(); ctx.arc(cx, cy, 60, 0, Math.PI*2); ctx.fill();
+                }
+
+                ctx.shadowColor = p.color; ctx.shadowBlur = p.r * 1.5;
+                ctx.fillStyle = p.color;
+                ctx.beginPath(); ctx.arc(px, py, p.r, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+
+                if (p.hasRings) {
+                    ctx.strokeStyle = 'rgba(253, 224, 71, 0.6)'; ctx.lineWidth = 3;
+                    ctx.beginPath(); ctx.ellipse(px, py, p.r * 2.2, p.r * 0.7, Math.PI/6, 0, Math.PI*2); ctx.stroke();
+                }
+            });
+        }
+    </script>
+</body>
+</html>
