@@ -1760,10 +1760,14 @@ ctx.beginPath(); ctx.ellipse(px, py, p.r * 2.2 * scaleRadius, p.r * 0.7 * scaleR
         -webkit-user-select: auto !important;
     }
 
-    /* 2. Loại bỏ độ trễ 300ms và kích hoạt phản hồi cảm ứng nhạy cho toàn bộ phần tử bấm */
+    /* 2. Cho phép thao tác trực tiếp với các phần tử điều khiển.
+       Riêng range dùng touch-action:auto để trình duyệt xử lý kéo slider tự nhiên. */
     button, .nav-btn, .tab-chip, .btn-act, .sub-exp-item, .card-enter-btn, select, input[type="range"] {
-        touch-action: manipulation !important;
         cursor: pointer !important;
+        pointer-events: auto !important;
+    }
+    input[type="range"] {
+        touch-action: auto !important;
         pointer-events: auto !important;
     }
 
@@ -2075,12 +2079,19 @@ ctx.beginPath(); ctx.ellipse(px, py, p.r * 2.2 * scaleRadius, p.r * 0.7 * scaleR
         };
     }
 
-    // E. BẢO VỆ SỰ KIỆN KÉO SLIDER KHÔNG BỊ GIÁN ĐOẠN
+    // E. KHÔNG CHẶN SỰ KIỆN INPUT CỦA SLIDER
+    // Lưu ý: listener capture + stopPropagation() sẽ chặn event trước khi
+    // tới chính <input>, làm các thuộc tính oninput gốc không chạy.
+
+    // E2. Đồng bộ slider theo sự kiện input ở bubble phase.
+    // Các slider hiện tại vẫn giữ oninput gốc; listener này chỉ là lớp dự phòng
+    // để đảm bảo giao diện và params luôn đồng bộ khi kéo/thay đổi bằng bàn phím.
     document.addEventListener('input', function(e) {
-        if (e.target && e.target.type === 'range') {
-            e.stopPropagation();
-        }
-    }, true);
+        var el = e.target;
+        if (!el || el.tagName !== 'INPUT' || el.type !== 'range') return;
+        // Không stopPropagation: để handler oninput inline của từng slider chạy bình thường.
+        el.setAttribute('aria-valuenow', el.value);
+    }, false);
 
     // F. GHI ĐÈ THUẬT TOÁN pH CHUẨN XÁC NỔI (MONKEY PATCHING HÓA HỌC)
     var originalDrawChemistry = window.drawChemistry;
